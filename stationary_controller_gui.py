@@ -5,7 +5,7 @@ from mode import Mode
 from styles import AgvStyles
 
 FONT_SIZE = 20
-PADDING = 5
+PADDING = 10
 
 
 class GUI(ttk.Frame):
@@ -66,11 +66,7 @@ class GUI(ttk.Frame):
             command=self.select_teach_mode,
             style="teach.TButton",
         )
-        self.btn_teach_mode.grid(
-            row=1,
-            column=0,
-            sticky=tk.EW,
-        )
+        self.btn_teach_mode.grid(row=1, column=0, sticky=tk.EW, padx=PADDING)
 
         self.btn_prod_mode = ttk.Button(
             self.mode_selection_pane,
@@ -78,11 +74,7 @@ class GUI(ttk.Frame):
             command=self.select_prod_mode,
             style="prod.TButton",
         )
-        self.btn_prod_mode.grid(
-            row=1,
-            column=1,
-            sticky=tk.EW,
-        )
+        self.btn_prod_mode.grid(row=1, column=1, sticky=tk.EW, padx=PADDING)
 
     def select_teach_mode(self):
         self.mode = Mode.Teach
@@ -160,7 +152,7 @@ class GUI(ttk.Frame):
             self.teach_pane,
             text="E-Stop",
         )
-        self.btn_set_home = ttk.Button(
+        self.btn_calibrate_home = ttk.Button(
             self.teach_pane,
             text="Calibrate Home",
         )
@@ -186,12 +178,12 @@ class GUI(ttk.Frame):
         self.btn_add_waypoint.grid(row=1, column=0)
         self.btn_move_forward.grid(row=1, column=1)
         self.btn_remove_waypoint.grid(row=1, column=2)
-        self.btn_rotate_right.grid(row=2, column=2)
-        self.btn_rotate_left.grid(row=2, column=0)
+        self.btn_rotate_right.grid(row=2, column=2, sticky=tk.W)
+        self.btn_rotate_left.grid(row=2, column=0, sticky=tk.E)
         self.btn_move_backward.grid(row=3, column=1)
         self.btn_halt.grid(row=3, column=0)
         self.btn_emergency_stop.grid(row=3, column=2)
-        self.btn_set_home.grid(row=2, column=1)
+        self.btn_calibrate_home.grid(row=2, column=1, pady=PADDING, padx=PADDING)
         self.dd_destinations.grid()
 
 
