@@ -1,0 +1,7 @@
+{
+    "gui_x_dimension": "700",
+    "gui_y_dimension": "500",
+    "title": "AGV Controller",
+    "font_size": "20",
+    "padding": "5"
+}
