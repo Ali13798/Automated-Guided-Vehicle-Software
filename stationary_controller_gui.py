@@ -7,6 +7,7 @@ from styles import AgvStyles
 
 FONT_SIZE = 20
 PADDING = 10
+HEADING_OFFSET = -90
 
 
 class GUI(ttk.Frame):
@@ -28,6 +29,9 @@ class GUI(ttk.Frame):
         # Current mode
         self.mode = Mode.Unselected
 
+        # TODO: delete temporarily set the mode automatically to teach.
+        self.mode = Mode.Teach
+
         # Create Paness
         self.create_panes()
 
@@ -36,9 +40,9 @@ class GUI(ttk.Frame):
 
         # Populate panes
         self.populate_top_pane()
+        self.populate_map_pane()
         self.populate_prod_pane()
         self.populate_teach_pane()
-        self.populate_map_pane()
 
     def create_panes(self) -> None:
         self.mode_selection_pane = ttk.Frame(self, style="command.TFrame", padding=10)
@@ -126,6 +130,21 @@ class GUI(ttk.Frame):
         )
         self.txt_destination_point.grid(row=2, column=1, sticky=tk.W)
 
+    def move_forward(self):
+        print("Pressed")
+        self.turtle.forward(10)
+
+    def move_backward(self):
+        self.turtle.backward(10)
+
+    def rotate_left(self):
+        cur_heading = self.turtle.heading()
+        print(f"cur heading is {cur_heading}")
+        self.turtle.left(10)
+
+    def rotate_right(self):
+        self.turtle.right(10)
+
     def populate_teach_pane(self) -> None:
         # Create Control Buttons
         ttk.Label(self.teach_pane, text="Controls").grid(row=0, column=1)
@@ -133,21 +152,25 @@ class GUI(ttk.Frame):
             self.teach_pane,
             text="↑",
             style="control.TButton",
+            command=self.move_forward,
         )
         self.btn_move_backward = ttk.Button(
             self.teach_pane,
             text="↓",
             style="control.TButton",
+            command=self.move_backward,
         )
         self.btn_rotate_left = ttk.Button(
             self.teach_pane,
             text="←",
             style="control.TButton",
+            command=self.rotate_left,
         )
         self.btn_rotate_right = ttk.Button(
             self.teach_pane,
             text="→",
             style="control.TButton",
+            command=self.rotate_right,
         )
         self.btn_halt = ttk.Button(
             self.teach_pane,
@@ -194,9 +217,10 @@ class GUI(ttk.Frame):
     def populate_map_pane(self):
         ttk.Label(self.map_pane, text="Map").grid(sticky=tk.N)
         self.canvas = turtle.ScrolledCanvas(self.map_pane)
-        self.canvas.grid()
+        self.canvas.grid(row=1, column=0)
         self.screen = turtle.TurtleScreen(self.canvas)
         self.turtle = turtle.RawTurtle(self.canvas)
+        self.turtle.left(90)
 
 
 def main():
