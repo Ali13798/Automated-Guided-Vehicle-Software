@@ -1,4 +1,5 @@
 import tkinter as tk
+import turtle
 from tkinter import ttk
 
 from mode import Mode
@@ -33,25 +34,29 @@ class GUI(ttk.Frame):
         # Grid Panes
         self.grid_panes()
 
-        # Populate three panes
+        # Populate panes
         self.populate_top_pane()
         self.populate_prod_pane()
         self.populate_teach_pane()
+        self.populate_map_pane()
 
     def create_panes(self) -> None:
         self.mode_selection_pane = ttk.Frame(self, style="command.TFrame", padding=10)
         self.prod_pane = ttk.Frame(self, style="button.TFrame", padding=10)
         self.teach_pane = ttk.Frame(self, style="display.TFrame", padding=10)
+        self.map_pane = ttk.Frame(self, style="canvas.TFrame", padding=10)
 
     def grid_panes(self):
         if self.mode is Mode.Unselected:
             self.mode_selection_pane.grid(row=0, column=0, sticky=tk.NSEW)
         elif self.mode is Mode.Teach:
-            self.teach_pane.grid(row=2, column=0, sticky=tk.NSEW)
+            self.teach_pane.grid(row=1, column=0, sticky=tk.NSEW)
             self.prod_pane.grid_remove()
+            self.map_pane.grid(row=1, column=2)
         elif self.mode is Mode.Production:
             self.prod_pane.grid(row=1, column=0, sticky=tk.NSEW)
             self.teach_pane.grid_remove()
+            self.map_pane.grid(row=1, column=2)
 
     def populate_top_pane(self):
         ttk.Label(self.mode_selection_pane, text="Select AGV Mode:").grid(
@@ -185,6 +190,13 @@ class GUI(ttk.Frame):
         self.btn_emergency_stop.grid(row=3, column=2)
         self.btn_calibrate_home.grid(row=2, column=1, pady=PADDING, padx=PADDING)
         self.dd_destinations.grid()
+
+    def populate_map_pane(self):
+        ttk.Label(self.map_pane, text="Map").grid(sticky=tk.N)
+        self.canvas = turtle.ScrolledCanvas(self.map_pane)
+        self.canvas.grid()
+        self.screen = turtle.TurtleScreen(self.canvas)
+        self.turtle = turtle.RawTurtle(self.canvas)
 
 
 def main():
