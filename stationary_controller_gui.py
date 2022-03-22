@@ -151,7 +151,7 @@ class GUI(ttk.Frame):
         wp = Waypoint(x=x, y=y, heading=heading)
         if not self.waypoints or wp != self.waypoints[-1]:
             self.waypoints.append(wp)
-            print(f"Stored waypoint: {self.waypoints[-1]}")
+            print(f"Stored waypoint: {wp}")
         else:
             print("Not a new waypoint. Jog the AGV then try again.")
 
@@ -177,6 +177,15 @@ class GUI(ttk.Frame):
         self.turtle.reset()
         self.turtle.clear()
         self.turtle.left(90)
+
+    def save_route(self, file_name="A_to_B.txt"):
+        with open(file=f"./routes/{file_name}", mode="w") as file:
+            file.write("X Y HEADING\n")
+            for wp in self.waypoints:
+                x = 0 if (wp.x < 0.001 and wp.x > -0.001) else wp.x
+                y = 0 if (wp.y < 0.001 and wp.y > -0.001) else wp.y
+                inst = f"{x} {y} {wp.heading}\n"
+                file.writelines(inst)
 
     def populate_teach_pane(self) -> None:
         # Create Control Buttons
@@ -208,7 +217,7 @@ class GUI(ttk.Frame):
         self.btn_halt = ttk.Button(
             self.teach_pane,
             text="Halt",
-            # command=lambda: self.turtle.setx(0),
+            command=self.save_route,
         )
         self.btn_emergency_stop = ttk.Button(
             self.teach_pane,
