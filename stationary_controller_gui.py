@@ -4,10 +4,10 @@ from tkinter import ttk
 
 from mode import Mode
 from styles import AgvStyles
+from waypoint import Waypoint
 
 FONT_SIZE = 20
 PADDING = 10
-HEADING_OFFSET = -90
 
 
 class GUI(ttk.Frame):
@@ -43,6 +43,8 @@ class GUI(ttk.Frame):
         self.populate_map_pane()
         self.populate_prod_pane()
         self.populate_teach_pane()
+
+        self.waypoints: list[Waypoint] = []
 
     def create_panes(self) -> None:
         self.mode_selection_pane = ttk.Frame(self, style="command.TFrame", padding=10)
@@ -130,20 +132,28 @@ class GUI(ttk.Frame):
         )
         self.txt_destination_point.grid(row=2, column=1, sticky=tk.W)
 
-    def move_forward(self):
-        print("Pressed")
-        self.turtle.forward(10)
+    def move_forward(self, dist: int = 10) -> None:
+        self.turtle.forward(dist)
 
-    def move_backward(self):
-        self.turtle.backward(10)
+    def move_backward(self, dist: int = 10):
+        self.turtle.backward(dist)
 
-    def rotate_left(self):
-        cur_heading = self.turtle.heading()
-        print(f"cur heading is {cur_heading}")
-        self.turtle.left(10)
+    def rotate_left(self, angle: int = 10):
+        self.turtle.left(angle)
 
-    def rotate_right(self):
-        self.turtle.right(10)
+    def rotate_right(self, angle: int = 10):
+        self.turtle.right(angle)
+
+    def store_waypoint(self):
+        x = self.turtle.xcor()
+        y = self.turtle.ycor()
+        heading = self.turtle.heading()
+        wp = Waypoint(x=x, y=y, heading=heading)
+        if not self.waypoints:
+            self.waypoints.append(wp)
+        if wp != self.waypoints[-1]:
+            self.waypoints.append(wp)
+        print(self.waypoints[-1])
 
     def populate_teach_pane(self) -> None:
         # Create Control Buttons
@@ -175,6 +185,7 @@ class GUI(ttk.Frame):
         self.btn_halt = ttk.Button(
             self.teach_pane,
             text="Halt",
+            # command=lambda: self.turtle.setx(0),
         )
         self.btn_emergency_stop = ttk.Button(
             self.teach_pane,
@@ -183,10 +194,12 @@ class GUI(ttk.Frame):
         self.btn_calibrate_home = ttk.Button(
             self.teach_pane,
             text="Calibrate Home",
+            command=lambda: print(self.waypoints),
         )
         self.btn_add_waypoint = ttk.Button(
             self.teach_pane,
             text="+ Waypoint",
+            command=self.store_waypoint,
         )
         self.btn_remove_waypoint = ttk.Button(
             self.teach_pane,
