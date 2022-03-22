@@ -149,11 +149,34 @@ class GUI(ttk.Frame):
         y = self.turtle.ycor()
         heading = self.turtle.heading()
         wp = Waypoint(x=x, y=y, heading=heading)
+        if not self.waypoints or wp != self.waypoints[-1]:
+            self.waypoints.append(wp)
+            print(f"Stored waypoint: {self.waypoints[-1]}")
+        else:
+            print("Not a new waypoint. Jog the AGV then try again.")
+
+    def delete_waypoint(self):
+        print()
         if not self.waypoints:
-            self.waypoints.append(wp)
-        if wp != self.waypoints[-1]:
-            self.waypoints.append(wp)
-        print(self.waypoints[-1])
+            print("No more waypoints stored.")
+            return
+
+        cur_waypoint = self.waypoints.pop()
+        self.traverse_waypoints()
+        print(f"Removed {cur_waypoint}")
+        print(f"Remaining waypoints:\n{self.waypoints}")
+
+    def traverse_waypoints(self):
+        self.initialize_turtle()
+        self.turtle.pencolor("black")
+        for wp in self.waypoints:
+            self.turtle.goto(x=wp.x, y=wp.y)
+            self.turtle.setheading(wp.heading)
+
+    def initialize_turtle(self):
+        self.turtle.reset()
+        self.turtle.clear()
+        self.turtle.left(90)
 
     def populate_teach_pane(self) -> None:
         # Create Control Buttons
@@ -190,11 +213,12 @@ class GUI(ttk.Frame):
         self.btn_emergency_stop = ttk.Button(
             self.teach_pane,
             text="E-Stop",
+            command=lambda: print(self.waypoints),
         )
         self.btn_calibrate_home = ttk.Button(
             self.teach_pane,
             text="Calibrate Home",
-            command=lambda: print(self.waypoints),
+            command=self.traverse_waypoints,
         )
         self.btn_add_waypoint = ttk.Button(
             self.teach_pane,
@@ -204,6 +228,7 @@ class GUI(ttk.Frame):
         self.btn_remove_waypoint = ttk.Button(
             self.teach_pane,
             text="- Waypoint",
+            command=self.delete_waypoint,
         )
 
         self.dd_destinations_options = ["A", "B", "C", "D"]
@@ -233,7 +258,7 @@ class GUI(ttk.Frame):
         self.canvas.grid(row=1, column=0)
         self.screen = turtle.TurtleScreen(self.canvas)
         self.turtle = turtle.RawTurtle(self.canvas)
-        self.turtle.left(90)
+        self.initialize_turtle()
 
 
 def main():
