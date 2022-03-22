@@ -197,9 +197,10 @@ class GUI(ttk.Frame):
             # Store instructions in a list
             instructions = file.readlines()
             for inst in instructions:
-                # Remove the leading \n
+                # Remove the leading \n.
                 inst: str = inst.strip()
 
+                # Transform the string to a list of string coordinates.
                 wp: list[str] = inst.split(" ")
 
                 x = float(wp[0])
@@ -207,6 +208,7 @@ class GUI(ttk.Frame):
                 heading = float(wp[2])
 
                 self.lwp.append(Waypoint(x=x, y=y, heading=heading))
+
         self.traverse_waypoints(self.lwp)
 
     def populate_teach_pane(self) -> None:
