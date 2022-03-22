@@ -162,14 +162,14 @@ class GUI(ttk.Frame):
             return
 
         cur_waypoint = self.waypoints.pop()
-        self.traverse_waypoints()
+        self.traverse_waypoints(self.waypoints)
         print(f"Removed {cur_waypoint}")
         print(f"Remaining waypoints:\n{self.waypoints}")
 
-    def traverse_waypoints(self):
+    def traverse_waypoints(self, waypoints: list[Waypoint]):
         self.initialize_turtle()
         self.turtle.pencolor("black")
-        for wp in self.waypoints:
+        for wp in waypoints:
             self.turtle.goto(x=wp.x, y=wp.y)
             self.turtle.setheading(wp.heading)
 
@@ -186,6 +186,28 @@ class GUI(ttk.Frame):
                 y = 0 if (wp.y < 0.001 and wp.y > -0.001) else wp.y
                 inst = f"{x} {y} {wp.heading}\n"
                 file.writelines(inst)
+
+    def load_route(self, file_name="A_to_B.txt"):
+        self.lwp = []
+
+        with open(file=f"./routes/{file_name}", mode="r") as file:
+            # Ignore the heading (first line)
+            file.readline()
+
+            # Store instructions in a list
+            instructions = file.readlines()
+            for inst in instructions:
+                # Remove the leading \n
+                inst: str = inst.strip()
+
+                wp: list[str] = inst.split(" ")
+
+                x = float(wp[0])
+                y = float(wp[1])
+                heading = float(wp[2])
+
+                self.lwp.append(Waypoint(x=x, y=y, heading=heading))
+        self.traverse_waypoints(self.lwp)
 
     def populate_teach_pane(self) -> None:
         # Create Control Buttons
@@ -217,7 +239,7 @@ class GUI(ttk.Frame):
         self.btn_halt = ttk.Button(
             self.teach_pane,
             text="Halt",
-            command=self.save_route,
+            command=self.load_route,
         )
         self.btn_emergency_stop = ttk.Button(
             self.teach_pane,
