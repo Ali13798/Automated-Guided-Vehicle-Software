@@ -43,14 +43,16 @@ class GUI(ttk.Frame):
         self.populate_map_pane()
         self.populate_prod_pane()
         self.populate_teach_pane()
+        self.populate_waypoints_pane()
 
         self.waypoints: list[Waypoint] = []
 
     def create_panes(self) -> None:
         self.mode_selection_pane = ttk.Frame(self, style="command.TFrame", padding=10)
-        self.prod_pane = ttk.Frame(self, style="button.TFrame", padding=10)
-        self.teach_pane = ttk.Frame(self, style="display.TFrame", padding=10)
-        self.map_pane = ttk.Frame(self, style="canvas.TFrame", padding=10)
+        self.prod_pane = ttk.Frame(self, style="button.TFrame", padding=PADDING)
+        self.teach_pane = ttk.Frame(self, style="display.TFrame", padding=PADDING)
+        self.map_pane = ttk.Frame(self, style="canvas.TFrame", padding=PADDING)
+        self.waypoints_pane = ttk.Frame(self, style="waypoint.TFrame", padding=PADDING)
 
     def grid_panes(self):
         if self.mode is Mode.Unselected:
@@ -58,11 +60,13 @@ class GUI(ttk.Frame):
         elif self.mode is Mode.Teach:
             self.teach_pane.grid(row=1, column=0, sticky=tk.NSEW)
             self.prod_pane.grid_remove()
-            self.map_pane.grid(row=1, column=2)
+            self.map_pane.grid(row=1, column=1, sticky=tk.NSEW)
+            self.waypoints_pane.grid(row=2, column=0, columnspan=2, sticky=tk.NSEW)
         elif self.mode is Mode.Production:
             self.prod_pane.grid(row=1, column=0, sticky=tk.NSEW)
             self.teach_pane.grid_remove()
             self.map_pane.grid(row=1, column=2)
+            self.waypoints_pane.grid_remove()
 
     def populate_top_pane(self):
         ttk.Label(self.mode_selection_pane, text="Select AGV Mode:").grid(
@@ -151,6 +155,7 @@ class GUI(ttk.Frame):
         wp = Waypoint(x=x, y=y, heading=heading)
         if not self.waypoints or wp != self.waypoints[-1]:
             self.waypoints.append(wp)
+            self.update_waypoint_label()
             print(f"Stored waypoint: {wp}")
         else:
             print("Not a new waypoint. Jog the AGV then try again.")
@@ -163,6 +168,7 @@ class GUI(ttk.Frame):
 
         cur_waypoint = self.waypoints.pop()
         self.traverse_waypoints(self.waypoints)
+        self.update_waypoint_label()
         print(f"Removed {cur_waypoint}")
         print(f"Remaining waypoints:\n{self.waypoints}")
 
@@ -292,6 +298,30 @@ class GUI(ttk.Frame):
         self.screen = turtle.TurtleScreen(self.canvas)
         self.turtle = turtle.RawTurtle(self.canvas)
         self.initialize_turtle()
+
+    def populate_waypoints_pane(self):
+        self.lbl_str_var = tk.StringVar(value="Current Waypoints:\n")
+        self.lbl_waypoints = ttk.Label(
+            self.waypoints_pane,
+            textvariable=self.lbl_str_var,
+            font=("Arial", FONT_SIZE - 5),
+        )
+        self.lbl_waypoints.grid()
+
+    def update_waypoint_label(self):
+        n_disp = 5
+        result = (
+            "Current Waypoints:\n"
+            if len(self.waypoints) < n_disp + 1
+            else "Last 5 Waypoints:\n"
+        )
+        for i, wp in enumerate(self.waypoints):
+            if len(self.waypoints) - n_disp - 1 < i:
+                line = f"Waypoint {i+1}: {wp}\n"
+                result += line
+                # cur_text = self.lbl_str_var.get()
+                # new_text = f"{cur_text}Waypoint {len(self.waypoints)}: {wp}\n"
+        self.lbl_str_var.set(result)
 
 
 def main():
