@@ -46,7 +46,7 @@ class GUI(ttk.Frame):
         self.populate_waypoints_pane()
 
         self.waypoints: list[Waypoint] = []
-        self.stations: dict[Waypoint] = {}
+        self.stations: dict[int, tuple[str, Waypoint]] = {}
 
     def create_panes(self) -> None:
         self.mode_selection_pane = ttk.Frame(self, style="command.TFrame", padding=10)
@@ -229,11 +229,11 @@ class GUI(ttk.Frame):
 
         station = self.waypoints[-1]
         name = self.txt_var_station_name.get()
-        self.stations[name] = station
+        index = len(self.stations)
+        self.stations[index] = (name, station)
         self.txt_var_station_name.set("")
-        # self.stations.append(station)
 
-        if len(self.stations) < 2:
+        if len(self.stations) == 1:
             print(f'Added starting station "{name}" at {station}')
             self.btn_add_station.configure(text="Add Destination")
         elif len(self.stations) == 2:
@@ -250,14 +250,34 @@ class GUI(ttk.Frame):
         top_left_y = -(station.y + radius)
         bot_right_x = station.x - radius
         bot_right_y = -station.y + radius
+        tag = f"station{len(self.stations)}"
+
         self.canvas.create_oval(
             top_left_x,
             top_left_y,
             bot_right_x,
             bot_right_y,
             outline="red",
+            tags=tag,
         )
-        self.canvas.create_text(station.x, -station.y + 10, text=name, fill="red")
+        self.canvas.create_text(
+            station.x, -station.y + 10, text=name, fill="red", tags=tag
+        )
+
+    def remove_station(self):
+        if not self.stations:
+            print("No stations found.")
+            return
+
+        tag = f"station{len(self.stations)}"
+        index = len(self.stations) - 1
+        print(f"Removed station {self.stations[index][0]} at {self.stations[index][1]}")
+        self.canvas.delete(tag)
+        self.stations.pop(index)
+        if len(self.stations) == 0:
+            self.btn_add_station.configure(text="Add Starting Station")
+        elif len(self.stations) == 1:
+            self.btn_add_station.configure(text="Add Destination", state="normal")
 
     def populate_teach_pane(self) -> None:
         # Create Control Buttons
@@ -332,6 +352,9 @@ class GUI(ttk.Frame):
             textvariable=self.txt_var_station_name,
             font=(None, FONT_SIZE),
         )
+        ttk.Button(
+            self.teach_pane, text="Remove Station", command=self.remove_station
+        ).grid(row=5, column=2)
 
         # Grid Control Buttons
         self.btn_add_waypoint.grid(row=1, column=0)
