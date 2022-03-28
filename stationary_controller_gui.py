@@ -1,5 +1,7 @@
+import threading
 import tkinter as tk
 import turtle
+from time import sleep
 from tkinter import ttk
 
 from mode import Mode
@@ -47,6 +49,23 @@ class GUI(ttk.Frame):
 
         self.waypoints: list[Waypoint] = []
         self.stations: dict[int, tuple[str, Waypoint]] = {}
+
+        self.th = threading.Thread(target=self.show_metrics_on_canvas, daemon=True)
+        self.th.start()
+
+    def show_metrics_on_canvas(self):
+        sleep(0.5)
+        tag = "metrics"
+        text_x = -self.canvas.winfo_width() * 0.35
+        text_y = -self.canvas.winfo_height() * 0.35
+        self.canvas.create_text(text_x, text_y, tags=tag)
+        while True:
+            x_cor = self.turtle.xcor()  # if abs(self.turtle.xcor()) > 0.001 else 0
+            Y_cor = self.turtle.ycor()  # if abs(self.turtle.ycor()) > 0.001 else 0
+            angle = self.turtle.heading()
+            text = f"X:\t{x_cor:.3f}\nY:\t{Y_cor:.3f}\nAngle:\t{angle:.1f}"
+            self.canvas.itemconfigure(tag, text=text)
+            sleep(0.25)
 
     def create_panes(self) -> None:
         self.mode_selection_pane = ttk.Frame(self, style="command.TFrame", padding=10)
