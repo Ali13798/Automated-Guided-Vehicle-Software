@@ -186,6 +186,12 @@ class GUI(ttk.Frame):
         self.turtle.left(90)
 
     def save_route(self, file_name="A_to_B.txt"):
+        if len(self.stations) != 2:
+            print(f"Two stations must exist but only {len(self.stations)} was found.")
+            return
+
+        file_name = f"{self.stations[0][0]}_to_{self.stations[1][0]}.txt"
+
         with open(file=f"./routes/{file_name}", mode="w") as file:
             file.write("X Y HEADING\n")
             for wp in self.waypoints:
@@ -193,6 +199,8 @@ class GUI(ttk.Frame):
                 y = 0 if (wp.y < 0.001 and wp.y > -0.001) else wp.y
                 inst = f"{x} {y} {wp.heading}\n"
                 file.writelines(inst)
+
+        print(f"Route {file_name[:-4]} successfully saved.")
 
     def load_route(self, file_name="A_to_B.txt"):
         self.lwp = []
@@ -341,6 +349,11 @@ class GUI(ttk.Frame):
             text="- Station",
             command=self.remove_station,
         )
+        btn_save_route = ttk.Button(
+            self.teach_pane,
+            text="Save Route",
+            command=self.save_route,
+        )
 
         self.dd_destinations_options = ["A", "B", "C", "D"]
         self.dd_var_destinations = tk.StringVar()
@@ -352,11 +365,13 @@ class GUI(ttk.Frame):
         )
 
         self.txt_var_station_name = tk.StringVar()
+        self.txt_var_station_name.set("Station Name")
         self.txt_station_name = ttk.Entry(
             self.teach_pane,
             textvariable=self.txt_var_station_name,
             font=(None, FONT_SIZE),
         )
+        self.txt_station_name.bind("<Button-1>", lambda event: self.on_click(event))
 
         # Grid Control Buttons
         self.btn_add_waypoint.grid(row=1, column=0)
@@ -372,6 +387,10 @@ class GUI(ttk.Frame):
         self.btn_add_station.grid(row=5, column=0, padx=PADDING, pady=PADDING)
         self.txt_station_name.grid(row=5, column=1)
         btn_remove_station.grid(row=5, column=2, padx=PADDING)
+        btn_save_route.grid()
+
+    def on_click(self, event):
+        self.txt_var_station_name.set("")
 
     def populate_map_pane(self):
         ttk.Label(self.map_pane, text="Map").grid(sticky=tk.N)
