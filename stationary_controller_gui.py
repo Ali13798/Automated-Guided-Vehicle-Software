@@ -1,8 +1,12 @@
 import threading
 import tkinter as tk
 import turtle
+from os import listdir
+from os.path import isfile, join
 from time import sleep
 from tkinter import ttk
+
+import numpy as np
 
 from mode import Mode
 from styles import AgvStyles
@@ -32,7 +36,8 @@ class GUI(ttk.Frame):
         self.mode = Mode.Unselected
 
         # TODO: delete temporarily set the mode automatically to teach.
-        self.mode = Mode.Teach
+        # self.mode = Mode.Teach
+        self.mode = Mode.Production
 
         # Create Paness
         self.create_panes()
@@ -156,6 +161,36 @@ class GUI(ttk.Frame):
         )
         self.txt_destination_point.grid(row=2, column=1, sticky=tk.W)
 
+        self.set_dd_destination_var()
+        # self.dd_destinations_options = ["A", "B", "C", "D"]
+        self.dd_var_destinations = tk.StringVar()
+        self.dd_starting_station = ttk.OptionMenu(
+            self.prod_pane,
+            self.dd_var_destinations,
+            self.dd_destinations_options[0],
+            *self.dd_destinations_options,
+        )
+        self.dd_starting_station.grid()
+
+        self.dd_destination_station = ttk.OptionMenu(
+            self.prod_pane,
+            self.dd_var_destinations,
+            self.dd_destinations_options[0],
+            *self.dd_destinations_options,
+        )
+        self.dd_destination_station.grid()
+
+    def set_dd_destination_var(self):
+        routes_path = "./routes/"
+        onlyfiles = [f for f in listdir(routes_path) if isfile(join(routes_path, f))]
+
+        # Remove the .txt file extension
+        stations = [f[:-4].split("_to_") for f in onlyfiles]
+
+        stations = np.unique(stations)
+        stations.sort()
+        self.dd_destinations_options = list(stations)
+
     def move_forward(self, dist: int = 10) -> None:
         self.turtle.forward(dist)
 
@@ -204,7 +239,7 @@ class GUI(ttk.Frame):
         self.turtle.clear()
         self.turtle.left(90)
 
-    def save_route(self, file_name="A_to_B.txt"):
+    def save_route(self):
         if len(self.stations) != 2:
             print(f"Two stations must exist but only {len(self.stations)} was found.")
             return
@@ -255,7 +290,7 @@ class GUI(ttk.Frame):
             return
 
         station = self.waypoints[-1]
-        name = self.txt_var_station_name.get()
+        name = self.txt_var_station_name.get().strip()
         index = len(self.stations)
         self.stations[index] = (name, station)
         self.txt_var_station_name.set("")
@@ -374,15 +409,6 @@ class GUI(ttk.Frame):
             command=self.save_route,
         )
 
-        self.dd_destinations_options = ["A", "B", "C", "D"]
-        self.dd_var_destinations = tk.StringVar()
-        self.dd_destinations = ttk.OptionMenu(
-            self.teach_pane,
-            self.dd_var_destinations,
-            self.dd_destinations_options[0],
-            *self.dd_destinations_options,
-        )
-
         self.txt_var_station_name = tk.StringVar()
         self.txt_var_station_name.set("Station Name")
         self.txt_station_name = ttk.Entry(
@@ -402,7 +428,6 @@ class GUI(ttk.Frame):
         self.btn_halt.grid(row=3, column=0)
         self.btn_emergency_stop.grid(row=3, column=2)
         self.btn_calibrate_home.grid(row=2, column=1, pady=PADDING, padx=PADDING)
-        self.dd_destinations.grid(row=4)
         self.btn_add_station.grid(row=5, column=0, padx=PADDING, pady=PADDING)
         self.txt_station_name.grid(row=5, column=1)
         btn_remove_station.grid(row=5, column=2, padx=PADDING)
