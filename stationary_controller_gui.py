@@ -160,7 +160,7 @@ class GUI(ttk.Frame):
         else:
             print("Not a new waypoint. Jog the AGV then try again.")
 
-    def delete_waypoint(self):
+    def remove_waypoint(self):
         print()
         if not self.waypoints:
             print("No more waypoints stored.")
@@ -257,7 +257,7 @@ class GUI(ttk.Frame):
         self.btn_calibrate_home = ttk.Button(
             self.teach_pane,
             text="Calibrate Home",
-            command=self.traverse_waypoints,
+            command=lambda: self.traverse_waypoints(self.waypoints),
         )
         self.btn_add_waypoint = ttk.Button(
             self.teach_pane,
@@ -267,7 +267,7 @@ class GUI(ttk.Frame):
         self.btn_remove_waypoint = ttk.Button(
             self.teach_pane,
             text="- Waypoint",
-            command=self.delete_waypoint,
+            command=self.remove_waypoint,
         )
 
         self.dd_destinations_options = ["A", "B", "C", "D"]
