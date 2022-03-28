@@ -235,7 +235,7 @@ class GUI(ttk.Frame):
 
         if len(self.stations) == 1:
             print(f'Added starting station "{name}" at {station}')
-            self.btn_add_station.configure(text="Add Destination")
+            self.btn_add_station.configure(text="+ Destination")
         elif len(self.stations) == 2:
             print(f'Added destination "{name}" at {station}')
             self.btn_add_station.configure(state="disabled")
@@ -275,9 +275,9 @@ class GUI(ttk.Frame):
         self.canvas.delete(tag)
         self.stations.pop(index)
         if len(self.stations) == 0:
-            self.btn_add_station.configure(text="Add Starting Station")
+            self.btn_add_station.configure(text="+ Starting Station")
         elif len(self.stations) == 1:
-            self.btn_add_station.configure(text="Add Destination", state="normal")
+            self.btn_add_station.configure(text="+ Destination", state="normal")
 
     def populate_teach_pane(self) -> None:
         # Create Control Buttons
@@ -333,8 +333,13 @@ class GUI(ttk.Frame):
         )
         self.btn_add_station = ttk.Button(
             self.teach_pane,
-            text="Add Starting Station",
+            text="+ Starting Station",
             command=self.add_station,
+        )
+        btn_remove_station = ttk.Button(
+            self.teach_pane,
+            text="- Station",
+            command=self.remove_station,
         )
 
         self.dd_destinations_options = ["A", "B", "C", "D"]
@@ -352,9 +357,6 @@ class GUI(ttk.Frame):
             textvariable=self.txt_var_station_name,
             font=(None, FONT_SIZE),
         )
-        ttk.Button(
-            self.teach_pane, text="Remove Station", command=self.remove_station
-        ).grid(row=5, column=2)
 
         # Grid Control Buttons
         self.btn_add_waypoint.grid(row=1, column=0)
@@ -369,6 +371,7 @@ class GUI(ttk.Frame):
         self.dd_destinations.grid(row=4)
         self.btn_add_station.grid(row=5, column=0, padx=PADDING, pady=PADDING)
         self.txt_station_name.grid(row=5, column=1)
+        btn_remove_station.grid(row=5, column=2, padx=PADDING)
 
     def populate_map_pane(self):
         ttk.Label(self.map_pane, text="Map").grid(sticky=tk.N)
