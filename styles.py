@@ -43,7 +43,7 @@ class AgvStyles:
         style.configure(
             "TEntry",
             font=(None, FONT_SIZE),
-            foreground="green",
+            foreground="#5e0009",
         )
 
         return style

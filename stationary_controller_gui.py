@@ -46,6 +46,7 @@ class GUI(ttk.Frame):
         self.populate_waypoints_pane()
 
         self.waypoints: list[Waypoint] = []
+        self.stations: dict[Waypoint] = {}
 
     def create_panes(self) -> None:
         self.mode_selection_pane = ttk.Frame(self, style="command.TFrame", padding=10)
@@ -114,10 +115,10 @@ class GUI(ttk.Frame):
             sticky=tk.W,
         )
 
-        self.dd_var_destinations = tk.StringVar()
+        self.txt_var_starting_point = tk.StringVar()
         self.txt_starting_point = ttk.Entry(
             self.prod_pane,
-            textvariable=self.dd_var_destinations,
+            textvariable=self.txt_var_starting_point,
             font=(None, FONT_SIZE),
         )
         self.txt_starting_point.grid(row=1, column=1, sticky=tk.W)
@@ -217,6 +218,47 @@ class GUI(ttk.Frame):
 
         self.traverse_waypoints(self.lwp)
 
+    def add_station(self):
+        if not self.waypoints:
+            print("No waypoints exist. First add a waypoint before adding a station.")
+            return
+
+        if not self.txt_var_station_name.get():
+            print("No station name entered. First add a station name.")
+            return
+
+        station = self.waypoints[-1]
+        name = self.txt_var_station_name.get()
+        self.stations[name] = station
+        self.txt_var_station_name.set("")
+        # self.stations.append(station)
+
+        if len(self.stations) < 2:
+            print(f'Added starting station "{name}" at {station}')
+            self.btn_add_station.configure(text="Add Destination")
+        elif len(self.stations) == 2:
+            print(f'Added destination "{name}" at {station}')
+            self.btn_add_station.configure(state="disabled")
+        else:
+            print("Error: More than two stations found.")
+
+        self.draw_station(station, name)
+
+    def draw_station(self, station: Waypoint, name: str):
+        radius = 4
+        top_left_x = station.x + radius
+        top_left_y = -(station.y + radius)
+        bot_right_x = station.x - radius
+        bot_right_y = -station.y + radius
+        self.canvas.create_oval(
+            top_left_x,
+            top_left_y,
+            bot_right_x,
+            bot_right_y,
+            outline="red",
+        )
+        self.canvas.create_text(station.x, -station.y + 10, text=name, fill="red")
+
     def populate_teach_pane(self) -> None:
         # Create Control Buttons
         ttk.Label(self.teach_pane, text="Controls").grid(row=0, column=1)
@@ -269,6 +311,11 @@ class GUI(ttk.Frame):
             text="- Waypoint",
             command=self.remove_waypoint,
         )
+        self.btn_add_station = ttk.Button(
+            self.teach_pane,
+            text="Add Starting Station",
+            command=self.add_station,
+        )
 
         self.dd_destinations_options = ["A", "B", "C", "D"]
         self.dd_var_destinations = tk.StringVar()
@@ -277,6 +324,13 @@ class GUI(ttk.Frame):
             self.dd_var_destinations,
             self.dd_destinations_options[0],
             *self.dd_destinations_options,
+        )
+
+        self.txt_var_station_name = tk.StringVar()
+        self.txt_station_name = ttk.Entry(
+            self.teach_pane,
+            textvariable=self.txt_var_station_name,
+            font=(None, FONT_SIZE),
         )
 
         # Grid Control Buttons
@@ -289,7 +343,9 @@ class GUI(ttk.Frame):
         self.btn_halt.grid(row=3, column=0)
         self.btn_emergency_stop.grid(row=3, column=2)
         self.btn_calibrate_home.grid(row=2, column=1, pady=PADDING, padx=PADDING)
-        self.dd_destinations.grid()
+        self.dd_destinations.grid(row=4)
+        self.btn_add_station.grid(row=5, column=0, padx=PADDING, pady=PADDING)
+        self.txt_station_name.grid(row=5, column=1)
 
     def populate_map_pane(self):
         ttk.Label(self.map_pane, text="Map").grid(sticky=tk.N)
