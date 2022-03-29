@@ -1,6 +1,7 @@
 import threading
 import tkinter as tk
 import turtle
+from fileinput import filename
 from os import listdir
 from os.path import isfile, join
 from time import sleep
@@ -164,9 +165,19 @@ class GUI(ttk.Frame):
         )
         self.dd_destination_station.grid(row=2, column=1)
 
-    def set_dd_destination_var(self):
+        ttk.Button(
+            self.prod_pane,
+            text="Load Route",
+            command=self.load_route,
+        ).grid()
+
+    def get_route_files(self):
         routes_path = "./routes/"
         onlyfiles = [f for f in listdir(routes_path) if isfile(join(routes_path, f))]
+        return onlyfiles
+
+    def set_dd_destination_var(self):
+        onlyfiles = self.get_route_files()
 
         # Remove the .txt file extension
         stations = [f[:-4].split("_to_") for f in onlyfiles]
@@ -240,8 +251,16 @@ class GUI(ttk.Frame):
 
         print(f"Route {file_name[:-4]} successfully saved.")
 
-    def load_route(self, file_name="A_to_B.txt"):
+    def load_route(self):
         self.lwp = []
+        starting_name = self.dd_var_starting_station.get()
+        destination_name = self.dd_var_destination_station.get()
+        file_name = f"{starting_name}_to_{destination_name}.txt"
+
+        onlyfiles = self.get_route_files()
+        if file_name not in onlyfiles:
+            print("Selected route not found in the saved routes.")
+            return
 
         with open(file=f"./routes/{file_name}", mode="r") as file:
             # Ignore the heading (first line)
@@ -263,6 +282,9 @@ class GUI(ttk.Frame):
                 self.lwp.append(Waypoint(x=x, y=y, heading=heading))
 
         self.traverse_waypoints(self.lwp)
+        print(
+            f'Route "{starting_name}" to "{destination_name}" loaded from file {file_name} successfully.'
+        )
 
     def add_station(self):
         if not self.waypoints:
@@ -355,7 +377,7 @@ class GUI(ttk.Frame):
         self.btn_halt = ttk.Button(
             self.teach_pane,
             text="Halt",
-            command=self.load_route,
+            # command=,
         )
         self.btn_emergency_stop = ttk.Button(
             self.teach_pane,
