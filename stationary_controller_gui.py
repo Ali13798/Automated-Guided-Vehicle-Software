@@ -222,12 +222,19 @@ class GUI(ttk.Frame):
         print(f"Removed {cur_waypoint}")
         print(f"Remaining waypoints:\n{self.waypoints}")
 
-    def traverse_waypoints(self, waypoints: list[Waypoint]):
+    def traverse_waypoints(
+        self, waypoints: list[Waypoint], set_waypoints: bool = False
+    ):
         self.initialize_turtle()
         self.turtle.pencolor("black")
+        if set_waypoints:
+            self.waypoints = []
+
         for wp in waypoints:
             self.turtle.goto(x=wp.x, y=wp.y)
             self.turtle.setheading(wp.heading)
+            if set_waypoints:
+                self.waypoints.append(wp)
 
     def initialize_turtle(self):
         self.turtle.reset()
@@ -268,23 +275,35 @@ class GUI(ttk.Frame):
 
             # Store instructions in a list
             instructions = file.readlines()
-            for inst in instructions:
+            self.stations = {}
+            for i, inst in enumerate(instructions):
                 # Remove the leading \n.
                 inst: str = inst.strip()
 
                 # Transform the string to a list of string coordinates.
-                wp: list[str] = inst.split(" ")
+                wp_list: list[str] = inst.split(" ")
 
-                x = float(wp[0])
-                y = float(wp[1])
-                heading = float(wp[2])
+                x = float(wp_list[0])
+                y = float(wp_list[1])
+                heading = float(wp_list[2])
 
-                self.lwp.append(Waypoint(x=x, y=y, heading=heading))
+                wp = Waypoint(x=x, y=y, heading=heading)
 
-        self.traverse_waypoints(self.lwp)
+                self.lwp.append(wp)
+
+                if i == 0:
+                    self.stations[len(self.stations)] = (starting_name, wp)
+                    self.draw_station(station=wp, name=starting_name)
+                elif i == len(instructions) - 1:
+                    self.stations[len(self.stations)] = (destination_name, wp)
+                    self.draw_station(station=wp, name=destination_name)
+
+        self.traverse_waypoints(self.lwp, set_waypoints=True)
         print(
             f'Route "{starting_name}" to "{destination_name}" loaded from file {file_name} successfully.'
         )
+        print(self.stations)
+        print(self.waypoints)
 
     def add_station(self):
         if not self.waypoints:
