@@ -139,46 +139,30 @@ class GUI(ttk.Frame):
             sticky=tk.W,
         )
 
-        self.txt_var_starting_point = tk.StringVar()
-        self.txt_starting_point = ttk.Entry(
-            self.prod_pane,
-            textvariable=self.txt_var_starting_point,
-            font=(None, FONT_SIZE),
-        )
-        self.txt_starting_point.grid(row=1, column=1, sticky=tk.W)
-
         ttk.Label(self.prod_pane, text="Destination:").grid(
             row=2,
             column=0,
             sticky=tk.W,
         )
 
-        self.txt_var_destination_point = tk.StringVar()
-        self.txt_destination_point = ttk.Entry(
-            self.prod_pane,
-            textvariable=self.txt_var_destination_point,
-            font=(None, FONT_SIZE),
-        )
-        self.txt_destination_point.grid(row=2, column=1, sticky=tk.W)
-
         self.set_dd_destination_var()
-        # self.dd_destinations_options = ["A", "B", "C", "D"]
-        self.dd_var_destinations = tk.StringVar()
+        self.dd_var_starting_station = tk.StringVar()
         self.dd_starting_station = ttk.OptionMenu(
             self.prod_pane,
-            self.dd_var_destinations,
+            self.dd_var_starting_station,
             self.dd_destinations_options[0],
             *self.dd_destinations_options,
         )
-        self.dd_starting_station.grid()
+        self.dd_starting_station.grid(row=1, column=1)
 
+        self.dd_var_destination_station = tk.StringVar()
         self.dd_destination_station = ttk.OptionMenu(
             self.prod_pane,
-            self.dd_var_destinations,
+            self.dd_var_destination_station,
             self.dd_destinations_options[0],
             *self.dd_destinations_options,
         )
-        self.dd_destination_station.grid()
+        self.dd_destination_station.grid(row=2, column=1)
 
     def set_dd_destination_var(self):
         routes_path = "./routes/"
