@@ -47,7 +47,7 @@ class GUI(ttk.Frame):
         self.grid_panes()
 
         # Populate panes
-        self.populate_top_pane()
+        self.populate_mode_selection_pane()
         self.populate_map_pane()
         self.populate_prod_pane()
         self.populate_teach_pane()
@@ -151,103 +151,218 @@ class GUI(ttk.Frame):
             )
             self.waypoints_pane.grid_remove()
 
-    def populate_top_pane(self):
+    def populate_mode_selection_pane(self) -> None:
+        """Generate the contents of the mode selection pane."""
+
+        # Create and place the label on the screen
         ttk.Label(self.mode_selection_pane, text="Select AGV Mode:").grid(
             row=0,
             column=0,
             columnspan=2,
             sticky=tk.W,
         )
+
+        # Create the buttons
         self.btn_teach_mode = ttk.Button(
             self.mode_selection_pane,
             text="Teach Mode",
             command=self.select_teach_mode,
             style="teach.TButton",
         )
-        self.btn_teach_mode.grid(
-            row=1, column=0, sticky=tk.EW, padx=AgvStyles.PADDING
-        )
-
         self.btn_prod_mode = ttk.Button(
             self.mode_selection_pane,
             text="Auto Mode",
             command=self.select_prod_mode,
             style="prod.TButton",
         )
+
+        # place the buttons on the screen
+        self.btn_teach_mode.grid(
+            row=1, column=0, sticky=tk.EW, padx=AgvStyles.PADDING
+        )
         self.btn_prod_mode.grid(
             row=1, column=1, sticky=tk.EW, padx=AgvStyles.PADDING
         )
 
-    def select_teach_mode(self):
+    def select_teach_mode(self) -> None:
+        """Handles selecting the teach mode button."""
+
+        # Set the mode to teach
         self.mode = Mode.Teach
+
+        # Disable and enable the appropriate buttons
         self.btn_prod_mode.state(["!disabled"])
         self.btn_teach_mode.state(["disabled"])
+
+        # Change the background of the selected button
         self.style.map("prod.TButton", background=[("alternate", "#fcc200")])
         self.style.map("teach.TButton", background=[("disabled", "green")])
+
+        # Grid the appropriate pane
         self.grid_panes()
 
-    def select_prod_mode(self):
+    def select_prod_mode(self) -> None:
+        """Handles selecting the production mode button"""
+
+        # Set the mode to production
         self.mode = Mode.Production
+
+        # Disable and enable the appropriate buttons
         self.btn_teach_mode.state(["!disabled"])
         self.btn_prod_mode.state(["disabled"])
+
+        # Change the background of the selected button
         self.style.map("teach.TButton", background=[("alternate", "#fcc200")])
         self.style.map("prod.TButton", background=[("disabled", "green")])
+
+        # Grid the appropriate pane
         self.grid_panes()
 
-    def populate_prod_pane(self):
+    def populate_prod_pane(self) -> None:
+        """Generate the contents of the production pane."""
+
+        # Create and place labels on the screen
         ttk.Label(self.prod_pane, text="Starting Station:").grid(
             row=1,
             column=0,
             sticky=tk.W,
         )
-
         ttk.Label(self.prod_pane, text="Destination:").grid(
             row=2,
             column=0,
             sticky=tk.W,
         )
 
-        self.set_dd_destination_var()
+        # options to appear in the dropdown menu
+        self.dd_destinations_options = self.set_dd_destination_var()
+
+        # Selected option from the starting dropdown menu
         self.dd_var_starting_station = tk.StringVar()
+
+        # Starting dropdown menu
         self.dd_starting_station = ttk.OptionMenu(
             self.prod_pane,
             self.dd_var_starting_station,
             self.dd_destinations_options[0],
             *self.dd_destinations_options,
         )
-        self.dd_starting_station.grid(row=1, column=1)
 
+        # Selected option from the destination dropdown menu
         self.dd_var_destination_station = tk.StringVar()
+
+        # Destination dropdown menu
         self.dd_destination_station = ttk.OptionMenu(
             self.prod_pane,
             self.dd_var_destination_station,
             self.dd_destinations_options[0],
             *self.dd_destinations_options,
         )
+
+        # Place dropdown menus on the screen
+        self.dd_starting_station.grid(row=1, column=1)
         self.dd_destination_station.grid(row=2, column=1)
 
+        # Create and place the load button on the screen
         ttk.Button(
             self.prod_pane,
             text="Load Route",
             command=self.load_route,
         ).grid()
 
-    def get_route_files(self):
+    def get_route_files(self) -> list[str]:
+        """Returns a list of all file names in the routes directory
+
+        Returns:
+            list[str]: list of file names
+        """
+
+        # Relative location of the routes directory
         routes_path = "./routes/"
+
+        # Get the file names
         onlyfiles = [
             f for f in listdir(routes_path) if isfile(join(routes_path, f))
         ]
         return onlyfiles
 
-    def set_dd_destination_var(self):
-        onlyfiles = self.get_route_files()
+    def set_dd_destination_var(self) -> list[str]:
+        """Generates the list of stations based on the saved routes.
 
-        # Remove the .txt file extension
-        stations = [f[:-4].split("_to_") for f in onlyfiles]
+        Returns:
+            list[str]: list of destination options
+        """
 
+        files = self.get_route_files()
+
+        # Remove the .txt file extension for each list item
+        stations = [f[:-4].split("_to_") for f in files]
+
+        # Remove duplicate station values
         stations = np.unique(stations)
+
+        # Sort the station values alphabetically
         stations.sort()
-        self.dd_destinations_options = list(stations)
+        return list(stations)
+
+    def load_route(self) -> None:
+        """Loads the selected route from the routes directory."""
+
+        waypoints: list[Waypoint] = []
+        starting_name = self.dd_var_starting_station.get()
+        destination_name = self.dd_var_destination_station.get()
+        file_name = f"{starting_name}_to_{destination_name}.txt"
+
+        files: list[str] = self.get_route_files()
+        if file_name not in files:
+            print("Selected route not found in the saved routes.")
+            return
+
+        # Remove the previously loaded stations
+        for _ in range(len(self.stations)):
+            self.remove_station()
+
+        # Open the file to in read mode
+        with open(file=f"./routes/{file_name}", mode="r") as file:
+            # Ignore the heading (first line)
+            file.readline()
+
+            # Store instructions in a list
+            instructions: list[str] = file.readlines()
+
+            for i, inst in enumerate(instructions):
+                # Remove the trailing "\n".
+                inst: str = inst.strip()
+
+                # Transform the string to a list of string coordinates.
+                wp_list: list[str] = inst.split(" ")
+
+                x_cor = float(wp_list[0])
+                y_cor = float(wp_list[1])
+                angle = float(wp_list[2])
+
+                wp = Waypoint(x=x_cor, y=y_cor, heading=angle)
+
+                waypoints.append(wp)
+
+                # If the first instruction (starting station)
+                if i == 0:
+                    n = len(self.stations)
+                    self.stations[n] = (starting_name, wp)
+
+                    self.draw_station(station=wp, name=starting_name)
+
+                # If the last instruction (destination station)
+                if i == len(instructions) - 1:
+                    n = len(self.stations)
+                    self.stations[n] = (destination_name, wp)
+
+                    self.draw_station(station=wp, name=destination_name)
+
+        self.traverse_waypoints(waypoints=waypoints, set_waypoints=True)
+        print(
+            f'Route "{starting_name}" to "{destination_name}" \
+                 loaded from file {file_name} successfully.'
+        )
 
     def move_forward(self, dist: int = 10) -> None:
         self.turtle.forward(dist)
@@ -323,55 +438,6 @@ class GUI(ttk.Frame):
                 file.writelines(inst)
 
         print(f"Route {file_name[:-4]} successfully saved.")
-
-    def load_route(self):
-        self.lwp = []
-        starting_name = self.dd_var_starting_station.get()
-        destination_name = self.dd_var_destination_station.get()
-        file_name = f"{starting_name}_to_{destination_name}.txt"
-
-        onlyfiles = self.get_route_files()
-        if file_name not in onlyfiles:
-            print("Selected route not found in the saved routes.")
-            return
-
-        for _ in range(len(self.stations)):
-            self.remove_station()
-
-        with open(file=f"./routes/{file_name}", mode="r") as file:
-            # Ignore the heading (first line)
-            file.readline()
-
-            # Store instructions in a list
-            instructions = file.readlines()
-            self.stations = {}
-            for i, inst in enumerate(instructions):
-                # Remove the leading \n.
-                inst: str = inst.strip()
-
-                # Transform the string to a list of string coordinates.
-                wp_list: list[str] = inst.split(" ")
-
-                x = float(wp_list[0])
-                y = float(wp_list[1])
-                heading = float(wp_list[2])
-
-                wp = Waypoint(x=x, y=y, heading=heading)
-
-                self.lwp.append(wp)
-
-                if i == 0:
-                    self.stations[len(self.stations)] = (starting_name, wp)
-                    self.draw_station(station=wp, name=starting_name)
-                elif i == len(instructions) - 1:
-                    self.stations[len(self.stations)] = (destination_name, wp)
-                    self.draw_station(station=wp, name=destination_name)
-
-        self.traverse_waypoints(self.lwp, set_waypoints=True)
-        print(
-            f'Route "{starting_name}" to "{destination_name}" \
-                 loaded from file {file_name} successfully.'
-        )
 
     def add_station(self):
         if not self.waypoints:
