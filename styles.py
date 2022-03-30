@@ -1,15 +1,16 @@
-FONT_SIZE = 20
-PADDING = 5
-
-
 class AgvStyles:
+    """Includes the style specifications of the AGV COntrol GUI"""
+
+    FONT_SIZE = 20
+    PADDING = 5
+
     @staticmethod
-    def config_styles(style):
+    def config_styles(style) -> None:
         style.configure(
             "TButton",
             background="#fcc200",
-            font=(None, FONT_SIZE),
-            padding=PADDING,
+            font=(None, AgvStyles.FONT_SIZE),
+            padding=AgvStyles.PADDING,
         )
         style.configure(
             "control.TButton",
@@ -19,7 +20,7 @@ class AgvStyles:
         # Configure styles - Labels
         style.configure(
             "TLabel",
-            font=(None, FONT_SIZE),
+            font=(None, AgvStyles.FONT_SIZE),
             background="#5e0009",
             foreground="white",
         )
@@ -42,7 +43,7 @@ class AgvStyles:
         # Configure styles - Textbox
         style.configure(
             "TEntry",
-            font=(None, FONT_SIZE),
+            font=(None, AgvStyles.FONT_SIZE),
             foreground="#5e0009",
         )
 

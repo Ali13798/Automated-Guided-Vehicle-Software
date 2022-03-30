@@ -1,7 +1,6 @@
 import threading
 import tkinter as tk
 import turtle
-from fileinput import filename
 from os import listdir
 from os.path import isfile, join
 from time import sleep
@@ -13,18 +12,19 @@ from mode import Mode
 from styles import AgvStyles
 from waypoint import Waypoint
 
-FONT_SIZE = 20
-PADDING = 10
+# Global Constants
+AgvStyles.FONT_SIZE = 20
+AgvStyles.PADDING = 10
 
 
 class GUI(ttk.Frame):
     """AGV Control GUI"""
 
     def __init__(self) -> None:
-        # Initialize
+        """Initializer"""
         ttk.Frame.__init__(self)
 
-        # Set title
+        # Set title of the non-resizable window
         self.master.title("AGV Controller")
         self.master.resizable(0, 0)
         self.grid()
@@ -53,45 +53,102 @@ class GUI(ttk.Frame):
         self.populate_teach_pane()
         self.populate_waypoints_pane()
 
+        # Initialize waypoint and station tracking variables
         self.waypoints: list[Waypoint] = []
         self.stations: dict[int, tuple[str, Waypoint]] = {}
 
-        self.th = threading.Thread(target=self.show_metrics_on_canvas, daemon=True)
+        # Thread for Map overlay of current position and orientation data
+        self.th = threading.Thread(
+            target=self.show_metrics_on_canvas, daemon=True
+        )
         self.th.start()
 
-    def show_metrics_on_canvas(self):
+    def show_metrics_on_canvas(self) -> None:
+        """Creates the metrics textbox. Updates every 250 milliseconds."""
         sleep(0.5)
+
+        # Create text box for displaying data
         tag = "metrics"
-        text_x = -self.canvas.winfo_width() * 0.35
-        text_y = -self.canvas.winfo_height() * 0.35
-        self.canvas.create_text(text_x, text_y, tags=tag)
+        text_x_cor = -self.canvas.winfo_width() * 0.35
+        text_y_cor = -self.canvas.winfo_height() * 0.35
+        self.canvas.create_text(text_x_cor, text_y_cor, tags=tag)
+
         while True:
-            x_cor = self.turtle.xcor()  # if abs(self.turtle.xcor()) > 0.001 else 0
-            Y_cor = self.turtle.ycor()  # if abs(self.turtle.ycor()) > 0.001 else 0
+            # Get data
+            x_cor = self.turtle.xcor()
+            Y_cor = self.turtle.ycor()
             angle = self.turtle.heading()
+
+            # Compose the content of the textbox
             text = f"X:\t{x_cor:.3f}\nY:\t{Y_cor:.3f}\nAngle:\t{angle:.1f}"
+
+            # Set the textbox content
             self.canvas.itemconfigure(tag, text=text)
+
             sleep(0.25)
 
     def create_panes(self) -> None:
-        self.mode_selection_pane = ttk.Frame(self, style="command.TFrame", padding=10)
-        self.prod_pane = ttk.Frame(self, style="button.TFrame", padding=PADDING)
-        self.teach_pane = ttk.Frame(self, style="display.TFrame", padding=PADDING)
-        self.map_pane = ttk.Frame(self, style="canvas.TFrame", padding=PADDING)
-        self.waypoints_pane = ttk.Frame(self, style="waypoint.TFrame", padding=PADDING)
+        """Creates the different panes and store them as instance variables"""
 
-    def grid_panes(self):
+        self.mode_selection_pane = ttk.Frame(self, style="command.TFrame")
+        self.prod_pane = ttk.Frame(self, style="button.TFrame")
+        self.teach_pane = ttk.Frame(self, style="display.TFrame")
+        self.map_pane = ttk.Frame(self, style="canvas.TFrame")
+        self.waypoints_pane = ttk.Frame(self, style="waypoint.TFrame")
+
+    def grid_panes(self) -> None:
+        """Grids the appropriate pane."""
+
         if self.mode is Mode.Unselected:
-            self.mode_selection_pane.grid(row=0, column=0, sticky=tk.NSEW)
-        elif self.mode is Mode.Teach:
-            self.teach_pane.grid(row=1, column=0, sticky=tk.NSEW)
+            self.mode_selection_pane.grid(
+                row=0,
+                column=0,
+                sticky=tk.NSEW,
+                padx=AgvStyles.PADDING * 2,
+                pady=AgvStyles.PADDING * 2,
+            )
+            return
+
+        if self.mode is Mode.Teach:
+            self.teach_pane.grid(
+                row=1,
+                column=0,
+                sticky=tk.NSEW,
+                padx=AgvStyles.PADDING,
+                pady=AgvStyles.PADDING,
+            )
             self.prod_pane.grid_remove()
-            self.map_pane.grid(row=1, column=1, sticky=tk.NSEW)
-            self.waypoints_pane.grid(row=2, column=0, columnspan=2, sticky=tk.NSEW)
+            self.map_pane.grid(
+                row=1,
+                column=1,
+                sticky=tk.NSEW,
+                padx=AgvStyles.PADDING,
+                pady=AgvStyles.PADDING,
+            )
+            self.waypoints_pane.grid(
+                row=2,
+                column=0,
+                columnspan=2,
+                sticky=tk.NSEW,
+                padx=AgvStyles.PADDING,
+                pady=AgvStyles.PADDING,
+            )
         elif self.mode is Mode.Production:
-            self.prod_pane.grid(row=1, column=0, sticky=tk.NSEW)
+            self.prod_pane.grid(
+                row=1,
+                column=0,
+                sticky=tk.NSEW,
+                padx=AgvStyles.PADDING,
+                pady=AgvStyles.PADDING,
+            )
             self.teach_pane.grid_remove()
-            self.map_pane.grid(row=1, column=2)
+            self.map_pane.grid(
+                row=1,
+                column=2,
+                sticky=tk.NSEW,
+                padx=AgvStyles.PADDING,
+                pady=AgvStyles.PADDING,
+            )
             self.waypoints_pane.grid_remove()
 
     def populate_top_pane(self):
@@ -107,7 +164,9 @@ class GUI(ttk.Frame):
             command=self.select_teach_mode,
             style="teach.TButton",
         )
-        self.btn_teach_mode.grid(row=1, column=0, sticky=tk.EW, padx=PADDING)
+        self.btn_teach_mode.grid(
+            row=1, column=0, sticky=tk.EW, padx=AgvStyles.PADDING
+        )
 
         self.btn_prod_mode = ttk.Button(
             self.mode_selection_pane,
@@ -115,7 +174,9 @@ class GUI(ttk.Frame):
             command=self.select_prod_mode,
             style="prod.TButton",
         )
-        self.btn_prod_mode.grid(row=1, column=1, sticky=tk.EW, padx=PADDING)
+        self.btn_prod_mode.grid(
+            row=1, column=1, sticky=tk.EW, padx=AgvStyles.PADDING
+        )
 
     def select_teach_mode(self):
         self.mode = Mode.Teach
@@ -173,7 +234,9 @@ class GUI(ttk.Frame):
 
     def get_route_files(self):
         routes_path = "./routes/"
-        onlyfiles = [f for f in listdir(routes_path) if isfile(join(routes_path, f))]
+        onlyfiles = [
+            f for f in listdir(routes_path) if isfile(join(routes_path, f))
+        ]
         return onlyfiles
 
     def set_dd_destination_var(self):
@@ -243,7 +306,10 @@ class GUI(ttk.Frame):
 
     def save_route(self):
         if len(self.stations) != 2:
-            print(f"Two stations must exist but only {len(self.stations)} was found.")
+            print(
+                f"Two stations must exist but only {len(self.stations)} \
+                    was found."
+            )
             return
 
         file_name = f"{self.stations[0][0]}_to_{self.stations[1][0]}.txt"
@@ -268,6 +334,9 @@ class GUI(ttk.Frame):
         if file_name not in onlyfiles:
             print("Selected route not found in the saved routes.")
             return
+
+        for _ in range(len(self.stations)):
+            self.remove_station()
 
         with open(file=f"./routes/{file_name}", mode="r") as file:
             # Ignore the heading (first line)
@@ -300,14 +369,16 @@ class GUI(ttk.Frame):
 
         self.traverse_waypoints(self.lwp, set_waypoints=True)
         print(
-            f'Route "{starting_name}" to "{destination_name}" loaded from file {file_name} successfully.'
+            f'Route "{starting_name}" to "{destination_name}" \
+                 loaded from file {file_name} successfully.'
         )
-        print(self.stations)
-        print(self.waypoints)
 
     def add_station(self):
         if not self.waypoints:
-            print("No waypoints exist. First add a waypoint before adding a station.")
+            print(
+                "No waypoints exist. First add a waypoint \
+                    before adding a station."
+            )
             return
 
         if not self.txt_var_station_name.get():
@@ -358,13 +429,22 @@ class GUI(ttk.Frame):
 
         tag = f"station{len(self.stations)}"
         index = len(self.stations) - 1
-        print(f"Removed station {self.stations[index][0]} at {self.stations[index][1]}")
+        print(
+            f"Removed station {self.stations[index][0]} at \
+            {self.stations[index][1]}"
+        )
         self.canvas.delete(tag)
         self.stations.pop(index)
+
+        if self.mode == Mode.Production:
+            return
+
         if len(self.stations) == 0:
             self.btn_add_station.configure(text="+ Starting Station")
         elif len(self.stations) == 1:
-            self.btn_add_station.configure(text="+ Destination", state="normal")
+            self.btn_add_station.configure(
+                text="+ Destination", state="normal"
+            )
 
     def populate_teach_pane(self) -> None:
         # Create Control Buttons
@@ -439,9 +519,11 @@ class GUI(ttk.Frame):
         self.txt_station_name = ttk.Entry(
             self.teach_pane,
             textvariable=self.txt_var_station_name,
-            font=(None, FONT_SIZE),
+            font=(None, AgvStyles.FONT_SIZE),
         )
-        self.txt_station_name.bind("<Button-1>", lambda event: self.on_click(event))
+        self.txt_station_name.bind(
+            "<Button-1>", lambda event: self.on_click(event)
+        )
 
         # Grid Control Buttons
         self.btn_add_waypoint.grid(row=1, column=0)
@@ -452,10 +534,14 @@ class GUI(ttk.Frame):
         self.btn_move_backward.grid(row=3, column=1)
         self.btn_halt.grid(row=3, column=0)
         self.btn_emergency_stop.grid(row=3, column=2)
-        self.btn_calibrate_home.grid(row=2, column=1, pady=PADDING, padx=PADDING)
-        self.btn_add_station.grid(row=5, column=0, padx=PADDING, pady=PADDING)
+        self.btn_calibrate_home.grid(
+            row=2, column=1, pady=AgvStyles.PADDING, padx=AgvStyles.PADDING
+        )
+        self.btn_add_station.grid(
+            row=5, column=0, padx=AgvStyles.PADDING, pady=AgvStyles.PADDING
+        )
         self.txt_station_name.grid(row=5, column=1)
-        btn_remove_station.grid(row=5, column=2, padx=PADDING)
+        btn_remove_station.grid(row=5, column=2, padx=AgvStyles.PADDING)
         btn_save_route.grid()
 
     def on_click(self, event):
@@ -474,7 +560,7 @@ class GUI(ttk.Frame):
         self.lbl_waypoints = ttk.Label(
             self.waypoints_pane,
             textvariable=self.lbl_str_var,
-            font=("Arial", FONT_SIZE - 5),
+            font=("Arial", AgvStyles.FONT_SIZE - 5),
         )
         self.lbl_waypoints.grid()
 
