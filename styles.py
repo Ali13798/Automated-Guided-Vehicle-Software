@@ -47,4 +47,10 @@ class AgvStyles:
             foreground="#5e0009",
         )
 
+        # Configure styles - Scales
+        style.configure(
+            "TScale",
+            background="#5e0009",
+        )
+
         return style
