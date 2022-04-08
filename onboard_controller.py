@@ -3,8 +3,11 @@ import math
 # unit: inch
 WHEEL_DIAM = 5
 
+# steps per revolution
+STEP_DRIVER_FREQ = 400
+
 # unit: degrees
-STEP_ANGLE = 0.9
+STEP_ANGLE = 360 / STEP_DRIVER_FREQ
 
 
 def calc_pulse_freq(velocity: float = 2.25):
