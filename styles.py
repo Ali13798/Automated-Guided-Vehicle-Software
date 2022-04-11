@@ -39,6 +39,10 @@ class AgvStyles:
         style.configure(
             "waypoint.TFrame",
         )
+        style.configure(
+            "canvas.TFrame",
+            # background="green",
+        )
 
         # Configure styles - Textbox
         style.configure(
