@@ -3,6 +3,7 @@ import socket
 import threading
 
 from config import read_config
+from instructions import Instruction
 
 
 class AgvSocket:
@@ -19,6 +20,9 @@ class AgvSocket:
         self.ip = ip
         self.port = port
         self.isServer = isServer
+
+        self.mutex = threading.Lock()
+        self.instructions: list[Instruction] = []
 
         if isServer:
             self.server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -102,6 +106,8 @@ class AgvSocket:
             if msg == self.DISCONNECT_MESSAGE:
                 self.connected = False
 
+            self.parse_message()
+
         # If not connected close the socket
         print("[Terminate] closing connection...")
         self.client.close()
@@ -109,3 +115,29 @@ class AgvSocket:
     def cleanup_server(self):
         print("[TERMINATE] Program ended. Starting cleanup...")
         self.send_message(self.DISCONNECT_MESSAGE)
+
+    def add_instruction(self, inst: Instruction) -> None:
+        self.mutex.acquire()
+        self.instructions.append(inst)
+        self.mutex.release()
+
+    def consume_instruction(self) -> Instruction:
+        self.mutex.acquire()
+        inst = self.instructions.pop(0)
+        self.mutex.release()
+        return inst
+
+    def parse_message(self):
+        return
+        msg = msg.split()
+        inst = Instruction(command=msg[0], value=msg[1])
+
+        self.add_instruction(inst)
+
+
+def main():
+    return
+
+
+if __name__ == "__main__":
+    main()
