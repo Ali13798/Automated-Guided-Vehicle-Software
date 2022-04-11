@@ -1,44 +1,56 @@
+import atexit
 import socket
 import threading
 
-PORT = 1234
-SERVER = socket.gethostbyname(socket.gethostname())
 FORMAT = "utf-8"
-HEADERSIZE = 16
 DISCONNECT_MESSAGE = "!DISCONNECT"
-
-server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-server.bind((SERVER, PORT))
+HEADERSIZE = 16
 
 
-def handle_client(client: socket.socket, addr):
-    print(f"[NEW CONNECTION] {addr} connected.")
+class Server:
+    def __init__(self, ip: str, port: int) -> None:
+        self.SERVER = ip
+        self.server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        self.server.bind((ip, port))
 
-    connected = True
-    while connected:
-        msg_length = client.recv(HEADERSIZE).decode(FORMAT)
-        if msg_length:
-            msg_length = int(msg_length)
-            msg = client.recv(msg_length).decode(FORMAT)
-            print(f"[{addr}] {msg}")
+    def handle_client(self, client: socket.socket, addr) -> None:
+        print(f"[NEW CONNECTION] {addr} connected.")
 
-            if msg == DISCONNECT_MESSAGE:
-                connected = False
+        connected = True
+        while connected:
+            msg_length = client.recv(HEADERSIZE).decode(FORMAT)
+            if msg_length:
+                msg_length = int(msg_length)
+                msg = client.recv(msg_length).decode(FORMAT)
+                print(f"[{addr}] {msg}")
 
-    client.close()
+                if msg == DISCONNECT_MESSAGE:
+                    connected = False
 
+        # If not connected close the socket
+        client.close()
 
-def start():
-    server.listen()
-    print(f"[LISTENNING] Server is listenning on {SERVER}")
-    while True:
-        client, addr = server.accept()
+    def start(self):
+        self.server.listen()
+        print(f"[LISTENNING] Server is listenning on {self.SERVER}")
+        client, addr = self.server.accept()
         thread = threading.Thread(
-            target=handle_client, args=(client, addr), daemon=True
+            target=self.handle_client, args=(client, addr)
         )
         thread.start()
-        print(f"[ACTIVE CONNECTIONS] {threading.active_count() - 1}")
+        # print(f"[ACTIVE CONNECTIONS] {threading.active_count() - 1}")
 
 
-print("[STARTING] server is starting...")
-start()
+def main():
+    PORT = 1234
+    SERVER = socket.gethostbyname(socket.gethostname())
+
+    server = Server(ip=SERVER, port=PORT)
+
+    print("[STARTING] server is starting...")
+    server.start()
+
+
+if __name__ == "__main__":
+    main()
