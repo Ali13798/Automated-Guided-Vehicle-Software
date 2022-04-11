@@ -1,11 +1,13 @@
 import math
 
-from agv_tools import AgvTools as agvt
+from agv_tools import AgvTools as agv_tools
 
 
 def main():
-    freq = agvt.calc_pulse_freq()
-    print(freq)
+    print(agv_tools.calc_pulse_freq(velocity=2.25))
+
+    dist = 10
+    print(agv_tools.calc_pulse_num(dist))
 
 
 if __name__ == "__main__":
