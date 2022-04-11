@@ -1,7 +1,11 @@
 {
-    "gui_x_dimension": "700",
-    "gui_y_dimension": "500",
+    "gui_x_dimension": 700,
+    "gui_y_dimension": 500,
     "title": "AGV Controller",
-    "font_size": "20",
-    "padding": "5"
+    "font_size": 20,
+    "padding": 5,
+    "socket_encoding_format": "utf-8",
+    "socket_message_header_size": 16,
+    "socket_disconnect_message": "!DISCONNECT",
+    "socket_establish_connection_message": "!HANDSHAKE"
 }

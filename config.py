@@ -9,9 +9,13 @@ class ControllerConfig:
     title: str
     font_size: int
     padding: int
+    socket_encoding_format: str
+    socket_message_header_size: int
+    socket_disconnect_message: str
+    socket_establish_connection_message: str
 
 
-def read_config(config_file: str) -> ControllerConfig:
+def read_config(config_file: str = "config.json") -> ControllerConfig:
     with open(config_file, "r") as file:
         data = json.load(file)
         return ControllerConfig(**data)
