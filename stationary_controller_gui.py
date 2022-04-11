@@ -44,7 +44,7 @@ class GUI(ttk.Frame):
         self.create_panes()
 
         # Populate and place Panes
-        self.populate_and_grid_panes()
+        self.update_and_grid_panes()
 
         # Populate panes
         self.populate_map_pane()
@@ -93,7 +93,7 @@ class GUI(ttk.Frame):
         self.map_pane = ttk.Frame(self, style="canvas.TFrame")
         self.waypoints_pane = ttk.Frame(self, style="waypoint.TFrame")
 
-    def populate_and_grid_panes(self) -> None:
+    def update_and_grid_panes(self) -> None:
         """Grids the appropriate pane."""
 
         if self.mode is Mode.Unselected:
@@ -124,6 +124,7 @@ class GUI(ttk.Frame):
             self.map_pane.grid(
                 row=1,
                 column=1,
+                rowspan=2,
                 sticky=tk.NSEW,
                 padx=AgvStyles.PADDING,
                 pady=AgvStyles.PADDING,
@@ -131,7 +132,7 @@ class GUI(ttk.Frame):
             self.waypoints_pane.grid(
                 row=2,
                 column=0,
-                columnspan=2,
+                # columnspan=2,
                 sticky=tk.NSEW,
                 padx=AgvStyles.PADDING,
                 pady=AgvStyles.PADDING,
@@ -154,6 +155,7 @@ class GUI(ttk.Frame):
             self.map_pane.grid(
                 row=1,
                 column=2,
+                rowspan=2,
                 sticky=tk.NSEW,
                 padx=AgvStyles.PADDING,
                 pady=AgvStyles.PADDING,
@@ -209,7 +211,7 @@ class GUI(ttk.Frame):
         self.style.map("teach.TButton", background=[("disabled", "green")])
 
         # Grid the appropriate pane
-        self.populate_and_grid_panes()
+        self.update_and_grid_panes()
 
     def select_prod_mode(self) -> None:
         """Handles selecting the production mode button"""
@@ -226,7 +228,7 @@ class GUI(ttk.Frame):
         self.style.map("prod.TButton", background=[("disabled", "green")])
 
         # Grid the appropriate pane
-        self.populate_and_grid_panes()
+        self.update_and_grid_panes()
 
     def populate_prod_pane(self) -> None:
         """Generate the contents of the production pane."""
@@ -516,8 +518,7 @@ class GUI(ttk.Frame):
         tag = f"station{len(self.stations)}"
         index = len(self.stations) - 1
         print(
-            f"Removed station {self.stations[index][0]} at \
-            {self.stations[index][1]}"
+            f'Removed station "{self.stations[index][0]}" at {self.stations[index][1]}'
         )
         self.canvas.delete(tag)
         self.stations.pop(index)
@@ -567,7 +568,7 @@ class GUI(ttk.Frame):
         self.btn_emergency_stop = ttk.Button(
             self.teach_pane,
             text="E-Stop",
-            command=lambda: print(self.waypoints),
+            # command=lambda: print(self.waypoints),
         )
         self.btn_calibrate_home = ttk.Button(
             self.teach_pane,
@@ -612,22 +613,11 @@ class GUI(ttk.Frame):
         )
 
         self.txt_intensity_value = tk.IntVar(value=10)
-        # self.intensity_scale = ttk.Scale(
-        #     self.teach_pane,
-        #     orient=tk.HORIZONTAL,
-        #     from_=1,
-        #     to=10,
-        #     length=300,
-        #     variable=self.intensity_value,
-        # )
         self.txt_intensity = ttk.Entry(
             self.teach_pane,
             textvariable=self.txt_intensity_value,
             font=(None, AgvStyles.FONT_SIZE),
         )
-        # self.txt_intensity.bind(
-        #     "<Button-1>", lambda event: self.on_click_txt_intensity(event)
-        # )
 
         # Place Elements
         # Row 1
@@ -648,9 +638,9 @@ class GUI(ttk.Frame):
         self.btn_emergency_stop.grid(row=3, column=2)
 
         # Row 4
-        ttk.Label(self.teach_pane, text="Set intensity [1, 10]:").grid(
-            row=4, column=0, sticky=tk.E
-        )
+        ttk.Label(
+            self.teach_pane, text="Set intensity [1, 10] (inches):"
+        ).grid(row=4, column=0, sticky=tk.E)
         self.txt_intensity.grid(
             row=4, column=1, pady=AgvStyles.PADDING, sticky=tk.W
         )
@@ -668,14 +658,12 @@ class GUI(ttk.Frame):
     def on_click_txt_station_name(self, event):
         self.txt_var_station_name.set("")
 
-    # def on_click_txt_intensity(self, event):
-    #     self.txt_intensity_value.set(10)
-
     def populate_map_pane(self):
         ttk.Label(self.map_pane, text="Map").grid(sticky=tk.N)
         self.canvas = turtle.ScrolledCanvas(self.map_pane)
         self.canvas.grid(row=1, column=0)
         self.screen = turtle.TurtleScreen(self.canvas)
+        self.screen.screensize(1000, 1000)
         self.turtle = turtle.RawTurtle(self.canvas)
         self.initialize_turtle()
 
@@ -699,8 +687,6 @@ class GUI(ttk.Frame):
             if len(self.waypoints) - n_disp - 1 < i:
                 line = f"Waypoint {i+1}: {wp}\n"
                 result += line
-                # cur_text = self.lbl_str_var.get()
-                # new_text = f"{cur_text}Waypoint {len(self.waypoints)}: {wp}\n"
         self.lbl_str_var.set(result)
 
 
