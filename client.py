@@ -11,6 +11,7 @@ def main():
     while True:
         text = input("Enter message: ")
         client.send_message(text)
+        print(f"[SERVER] {client.read_message()}")
 
 
 if __name__ == "__main__":
