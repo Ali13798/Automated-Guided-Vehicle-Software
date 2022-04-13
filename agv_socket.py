@@ -2,6 +2,7 @@ import atexit
 import socket
 import threading
 
+from agv_command import AgvCommand
 from config import read_config
 from instructions import Instruction
 
@@ -10,11 +11,11 @@ class AgvSocket:
     def __init__(self, ip: str, port: int, isServer: bool = False) -> None:
 
         # Configuration values
-        conf = read_config()
-        self.FORMAT = conf.socket_encoding_format
-        self.HEADERSIZE = conf.socket_message_header_size
-        self.DISCONNECT_MESSAGE = conf.socket_disconnect_message
-        self.HANDSHAKE = conf.socket_establish_connection_message
+        self.config = read_config()
+        self.FORMAT = self.config.socket_encoding_format
+        self.HEADERSIZE = self.config.socket_message_header_size
+        self.DISCONNECT_MESSAGE = self.config.socket_disconnect_message
+        self.HANDSHAKE = self.config.socket_establish_connection_message
 
         # Instance variables passed
         self.ip = ip
@@ -23,6 +24,7 @@ class AgvSocket:
 
         self.mutex = threading.Lock()
         self.instructions: list[Instruction] = []
+        self.valid_commands = [cmd.value for cmd in AgvCommand]
 
         if isServer:
             self.server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -106,7 +108,9 @@ class AgvSocket:
             if msg == self.DISCONNECT_MESSAGE:
                 self.connected = False
 
-            self.parse_message()
+            instruction = self.parse_message(msg)
+            if instruction:
+                self.add_instruction(instruction)
 
         # If not connected close the socket
         print("[Terminate] closing connection...")
@@ -127,12 +131,48 @@ class AgvSocket:
         self.mutex.release()
         return inst
 
-    def parse_message(self):
-        return
+    def parse_message(self, msg: str) -> Instruction | None:
         msg = msg.split()
-        inst = Instruction(command=msg[0], value=msg[1])
+        msg = [n.upper() for n in msg]
+        # print(msg)
+        if len(msg) != 2:
+            print(f"[INVALID COMMAND] Expected 2 words, but got {len(msg)}.")
+            self.send_message(AgvCommand.invalid.value)
+            return
 
-        self.add_instruction(inst)
+        if msg[0] not in self.valid_commands:
+            print(f'[INVALID COMMAND] command "{msg[0]}" is not valid.')
+            self.send_message(AgvCommand.invalid.value)
+            return
+
+        try:
+            int(msg[1])
+        except ValueError:
+            print(
+                f'[INVALID COMMAND] expected a number as second term, but got "{msg[1]}."'
+            )
+            self.send_message(AgvCommand.invalid.value)
+            return
+
+        # TODO: FInd the actual command corresponding with the msg
+        inst = Instruction(command=msg[0], value=msg[1])
+        self.send_message(AgvCommand.valid.value)
+
+        return inst
+
+    def instruction_handler(self):
+        while True:
+            self.mutex.acquire()
+            n = len(self.instructions)
+            if n > 0:
+                # process instruction then pop
+                pass
+
+            self.mutex.release()
+
+    def emergency_stop(self):
+        # stop everything, then clear instruction list.
+        return
 
 
 def main():
