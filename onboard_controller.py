@@ -24,20 +24,23 @@ class Controller:
 
         message_handler = threading.Thread(target=self.shared_list_handler)
         message_handler.start()
+        inst_handler = threading.Thread(target=self.instruction_handler)
+        inst_handler.start()
 
     def shared_list_handler(self):
         while self.server.connected:
-            n = len(self.shared_list)
-            if n > 0:
-                self.mutex_shared_list.acquire()
-                message = self.shared_list.pop(0)
-                self.mutex_shared_list.release()
+            if not len(self.shared_list) > 0:
+                continue
 
-                instruction = self.parse_message(message)
-                if instruction is None:
-                    continue
+            self.mutex_shared_list.acquire()
+            message = self.shared_list.pop(0)
+            self.mutex_shared_list.release()
 
-                self.add_instruction(instruction)
+            instruction = self.parse_message(message)
+            if instruction is None:
+                continue
+
+            self.add_instruction(instruction)
 
     def add_instruction(self, inst: Instruction) -> None:
         self.mutex_instruction.acquire()
@@ -57,14 +60,11 @@ class Controller:
         # print(msg)
         if len(msg) != 2:
             em = f"[INVALID COMMAND] Expected 2 words, but got {len(msg)}."
-            # print()
             self.server.send_message(em)
             return
 
         if msg[0] not in self.valid_commands:
             em = f'[INVALID COMMAND] command "{msg[0]}" is not valid.'
-
-            # print()
             self.server.send_message(em)
             return
 
@@ -83,14 +83,17 @@ class Controller:
         return inst
 
     def instruction_handler(self):
-        while True:
-            self.mutex_shared_list.acquire()
-            n = len(self.instructions)
-            if n > 0:
-                # process instruction then pop
-                pass
+        while self.server.connected:
+            if not len(self.instructions) > 0:
+                continue
 
+            self.mutex_shared_list.acquire()
+            inst = self.instructions.pop(0)
             self.mutex_shared_list.release()
+            self.execute_instruction(inst)
+
+    def execute_instruction(self, instruction: Instruction):
+        pass
 
     def emergency_stop(self):
         # stop everything, then clear instruction list.
