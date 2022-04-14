@@ -103,7 +103,7 @@ class AgvSocket:
         msg_length = len(msg.encode(self.FORMAT))
         send_length = f"{msg_length:<{self.HEADERSIZE}}"
 
-        print(f"[SENDING] length ({msg_length:>3}): {msg}")
+        print(f"[SENDING {msg_length:>3}] {msg}")
 
         self.client.send(send_length.encode(self.FORMAT))
         self.client.send(msg.encode(self.FORMAT))
