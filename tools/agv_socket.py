@@ -2,7 +2,7 @@ import atexit
 import socket
 import threading
 
-from config import read_config
+from tools.config import read_config
 
 
 class AgvSocket:
