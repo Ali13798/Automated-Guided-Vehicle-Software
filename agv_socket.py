@@ -58,12 +58,17 @@ class AgvSocket:
         return False
 
     def read_message(self) -> str | None:
-        msg_length = self.client.recv(self.HEADERSIZE).decode(self.FORMAT)
-        if msg_length:
-            msg_length = int(msg_length)
-            msg = self.client.recv(msg_length).decode(self.FORMAT)
-            return msg
-        return
+        try:
+            msg_length = self.client.recv(self.HEADERSIZE).decode(self.FORMAT)
+            if msg_length:
+                msg_length = int(msg_length)
+                msg = self.client.recv(msg_length).decode(self.FORMAT)
+                return msg
+            return
+        except ConnectionResetError:
+            print("Connection forcibly closed.")
+            self.connected = False
+            return
 
     def send_message(self, msg: str) -> None:
         message = msg.encode(self.FORMAT)
