@@ -108,7 +108,7 @@ class AgvSocket:
         self.client.send(send_length.encode(self.FORMAT))
         self.client.send(msg.encode(self.FORMAT))
 
-    def start_server(self) -> None:
+    def start_server(self, shared_list: list, mutex: threading.Lock) -> None:
         """Starts the server and waits for client connection."""
 
         if not self.isServer:
@@ -123,6 +123,12 @@ class AgvSocket:
 
         self.connected = self.establish_connection()
 
+        if not self.connected:
+            return
+
+        self.shared_list = shared_list
+        self.mutex_shared = mutex
+
         thread = threading.Thread(target=self.handle_client, args=(addr,))
         thread.start()
 
@@ -136,7 +142,7 @@ class AgvSocket:
         if not self.isServer:
             return
 
-        print(f"[NEW CONNECTION] {type(addr)} connected.")
+        print(f"[NEW CONNECTION] {addr} connected.")
 
         while self.connected:
             msg = self.read_message()
@@ -145,10 +151,15 @@ class AgvSocket:
 
             print(f"[{addr}] {msg}")
 
+            self.mutex_shared.acquire()
+            self.shared_list.append(msg)
+            self.mutex_shared.release()
+
             if msg == self.DISCONNECT_MESSAGE:
                 self.connected = False
 
-            self.send_message(self.MESSAGE_RECEIVED)
+            # The controller sends back response instead.
+            # self.send_message(self.MESSAGE_RECEIVED)
 
         # If not connected close the socket.
         print("[TERMINATE] closing connection...")
