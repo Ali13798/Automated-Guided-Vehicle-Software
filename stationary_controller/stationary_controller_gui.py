@@ -8,9 +8,9 @@ from tkinter import ttk
 
 import numpy as np
 
-from mode import Mode
-from styles import AgvStyles
-from waypoint import Waypoint
+from stationary_controller.mode import Mode
+from stationary_controller.styles import AgvStyles
+from stationary_controller.waypoint import Waypoint
 
 # Global Constants
 AgvStyles.FONT_SIZE = 20
