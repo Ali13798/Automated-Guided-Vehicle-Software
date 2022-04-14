@@ -1,11 +1,12 @@
 import math
 import threading
 
-from agv_command import AgvCommand
-from agv_socket import AgvSocket
-from agv_tools import AgvTools as agv_tools
-from instructions import Instruction
-from mode import Mode
+from stationary_controller.mode import Mode
+from tools.agv_socket import AgvSocket
+from tools.agv_tools import AgvTools as agv_tools
+
+from onboard_controller.agv_command import AgvCommand
+from onboard_controller.instructions import Instruction
 
 
 class Controller:
