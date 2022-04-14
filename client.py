@@ -1,6 +1,6 @@
 import socket
 
-from agv_socket import AgvSocket
+from tools.agv_socket import AgvSocket
 
 
 def main():

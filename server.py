@@ -1,8 +1,8 @@
 import socket
 from time import sleep
 
-from agv_socket import AgvSocket
-from onboard_controller import Controller
+from onboard_controller.onboard_controller import Controller
+from tools.agv_socket import AgvSocket
 
 
 def main():
