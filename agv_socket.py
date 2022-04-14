@@ -14,6 +14,7 @@ class AgvSocket:
         self.HEADERSIZE = self.config.socket_message_header_size
         self.DISCONNECT_MESSAGE = self.config.socket_disconnect_message
         self.HANDSHAKE = self.config.socket_establish_connection_message
+        self.MESSAGE_RECEIVED = "!TRANSMITTED"
 
         # Instance variables passed
         self.ip = ip
@@ -107,9 +108,7 @@ class AgvSocket:
             if msg == self.DISCONNECT_MESSAGE:
                 self.connected = False
 
-            instruction = self.parse_message(msg)
-            if instruction:
-                self.add_instruction(instruction)
+            self.send_message(self.MESSAGE_RECEIVED)
 
         # If not connected close the socket
         print("[Terminate] closing connection...")

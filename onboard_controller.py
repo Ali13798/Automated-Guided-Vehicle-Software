@@ -35,12 +35,12 @@ class Controller:
         # print(msg)
         if len(msg) != 2:
             print(f"[INVALID COMMAND] Expected 2 words, but got {len(msg)}.")
-            self.send_message(AgvCommand.invalid.value)
+            self.send_message(AgvCommand.invalid_command.value)
             return
 
         if msg[0] not in self.valid_commands:
             print(f'[INVALID COMMAND] command "{msg[0]}" is not valid.')
-            self.send_message(AgvCommand.invalid.value)
+            self.send_message(AgvCommand.invalid_command.value)
             return
 
         try:
@@ -49,12 +49,12 @@ class Controller:
             print(
                 f'[INVALID COMMAND] expected a number as second term, but got "{msg[1]}."'
             )
-            self.send_message(AgvCommand.invalid.value)
+            self.send_message(AgvCommand.invalid_command.value)
             return
 
         # TODO: FInd the actual command corresponding with the msg
         inst = Instruction(command=msg[0], value=msg[1])
-        self.send_message(AgvCommand.valid.value)
+        self.send_message(AgvCommand.valid_command.value)
 
         return inst
 
