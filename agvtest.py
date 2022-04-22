@@ -5,8 +5,8 @@ import gpiozero
 from tools.agv_tools import AgvTools
 
 direction_gpio_bcm = 18
-left_motor_gpio_bcm = 24
-right_motor_gpio_bcm = 23
+left_motor_gpio_bcm = 23
+right_motor_gpio_bcm = 24
 
 freq = AgvTools.calc_pulse_freq(velocity=2.25)
 print(freq)
