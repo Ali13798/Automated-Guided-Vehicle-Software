@@ -55,7 +55,7 @@ class Controller:
         self.mutex_instruction.release()
         return inst
 
-    def parse_message(self, msg: str) -> Instruction | None:
+    def parse_message(self, msg: str) -> Instruction:
         msg = msg.split()
         msg = [n.upper() for n in msg]
         # print(msg)
