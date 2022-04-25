@@ -1,20 +1,25 @@
+import os
+import sys
 import threading
 import tkinter as tk
 import turtle
-from os import listdir
 from os.path import isfile, join
 from time import sleep
 from tkinter import ttk
 
 import numpy as np
 
+sys.path.insert(0, os.path.abspath("."))
+
+from tools.agv_socket import AgvSocket
+
 from stationary_controller.mode import Mode
 from stationary_controller.styles import AgvStyles
 from stationary_controller.waypoint import Waypoint
 
 # Global Constants
-AgvStyles.FONT_SIZE = 20
-AgvStyles.PADDING = 10
+SERVER_IP = "192.168.0.160"
+SERVER_PORT = 1234
 
 
 class GUI(ttk.Frame):
@@ -35,9 +40,10 @@ class GUI(ttk.Frame):
 
         # Current mode
         self.mode = Mode.Unselected
+        self.connected_to_server = False
 
         # TODO: delete temporarily set the mode automatically to teach.
-        self.mode = Mode.Teach
+        # self.mode = Mode.Teach
         # self.mode = Mode.Production
 
         # Create Paness
@@ -55,10 +61,8 @@ class GUI(ttk.Frame):
         self.stations: dict[int, tuple[str, Waypoint]] = {}
 
         # Thread for Map overlay of current position and orientation data
-        self.th = threading.Thread(
-            target=self.show_metrics_on_canvas, daemon=True
-        )
-        self.th.start()
+        th = threading.Thread(target=self.show_metrics_on_canvas, daemon=True)
+        th.start()
 
     def show_metrics_on_canvas(self) -> None:
         """Creates the metrics textbox. Updates every 250 milliseconds."""
@@ -105,7 +109,6 @@ class GUI(ttk.Frame):
                 padx=AgvStyles.PADDING * 2,
                 pady=AgvStyles.PADDING * 2,
             )
-            return
 
         if self.mode is Mode.Teach:
             self.populate_teach_pane()
@@ -195,6 +198,26 @@ class GUI(ttk.Frame):
         self.btn_prod_mode.grid(
             row=1, column=1, sticky=tk.EW, padx=AgvStyles.PADDING
         )
+
+        if self.connected_to_server:
+            return
+
+        self.btn_connect_to_server = ttk.Button(
+            self.mode_selection_pane,
+            text="Connect to Server",
+            command=self.connect_to_server,
+        )
+        self.btn_connect_to_server.grid(
+            row=1, column=2, sticky=tk.EW, padx=AgvStyles.PADDING
+        )
+
+    def connect_to_server(self):
+        self.client = AgvSocket(
+            ip=SERVER_IP, port=SERVER_PORT, isServer=False
+        )
+        text = input("Enter message: ")
+        self.client.send_message(text)
+        print(f"[SERVER] {self.client.read_message()}")
 
     def select_teach_mode(self) -> None:
         """Handles selecting the teach mode button."""
@@ -293,7 +316,7 @@ class GUI(ttk.Frame):
 
         # Get the file names
         onlyfiles = [
-            f for f in listdir(routes_path) if isfile(join(routes_path, f))
+            f for f in os.listdir(routes_path) if isfile(join(routes_path, f))
         ]
         return onlyfiles
 
