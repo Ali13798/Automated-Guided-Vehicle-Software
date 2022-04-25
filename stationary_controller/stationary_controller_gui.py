@@ -9,7 +9,7 @@ from tkinter import ttk
 
 import numpy as np
 
-sys.path.insert(0, os.path.abspath("."))
+sys.path.append(".")
 
 from tools.agv_socket import AgvSocket
 
