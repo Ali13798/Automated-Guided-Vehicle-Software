@@ -2,7 +2,7 @@ class AgvStyles:
     """Includes the style specifications of the AGV COntrol GUI"""
 
     FONT_SIZE = 20
-    PADDING = 5
+    PADDING = 10
 
     @staticmethod
     def config_styles(style) -> None:
