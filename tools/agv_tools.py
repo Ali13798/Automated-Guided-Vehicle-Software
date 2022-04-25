@@ -27,7 +27,8 @@ class AgvTools:
         # unit: 1/s (Hz)
         pulse_freq = omega_dps / STEP_ANGLE
 
-        return int(round(pulse_freq, 0))
+        # Double since on and off time are separate.
+        return int(round(pulse_freq, 0)) * 2
 
     def calc_pulse_num(inches: float) -> float:
         # radians
