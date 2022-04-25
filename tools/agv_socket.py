@@ -68,7 +68,7 @@ class AgvSocket:
         print("[CONN ERROR] did not connect to server.")
         return False
 
-    def read_message(self) -> str | None:
+    def read_message(self) -> str:
         """Receives a message from the connected socket using a
         header containing the length of the proceedign message.
 
