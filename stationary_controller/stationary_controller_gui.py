@@ -611,7 +611,12 @@ class GUI(ttk.Frame):
         self.btn_calibrate_home = ttk.Button(
             self.teach_pane,
             text="Calibrate Home",
-            command=lambda: self.traverse_waypoints(self.waypoints),
+            command=lambda: (
+                self.traverse_waypoints(self.waypoints),
+                self.client.send_message(
+                    f"{AgvCommand.calibrate_home.value} {0}"
+                ),
+            ),
         )
         self.btn_add_waypoint = ttk.Button(
             self.teach_pane,
