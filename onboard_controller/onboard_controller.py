@@ -1,7 +1,10 @@
 import threading
+import time
 
+import gpiozero
 from stationary_controller.mode import Mode
 from tools.agv_socket import AgvSocket
+from tools.agv_tools import AgvTools
 from tools.agv_tools import AgvTools as agv_tools
 
 from onboard_controller.agv_command import AgvCommand
@@ -21,6 +24,21 @@ class Controller:
         self.valid_commands = [cmd.value for cmd in AgvCommand]
 
         server.start_server(self.shared_list, self.mutex_shared_list)
+
+        direction_gpio_bcm = 18
+        left_motor_gpio_bcm = 24
+        right_motor_gpio_bcm = 23
+
+        freq = AgvTools.calc_pulse_freq(velocity=2.25)
+        duty_cycle = 1
+
+        self.direction = gpiozero.OutputDevice(direction_gpio_bcm)
+        self.left_motor = gpiozero.PWMOutputDevice(
+            left_motor_gpio_bcm, initial_value=duty_cycle, frequency=freq
+        )
+        self.right_motor = gpiozero.PWMOutputDevice(
+            right_motor_gpio_bcm, initial_value=duty_cycle, frequency=freq
+        )
 
         message_handler = threading.Thread(target=self.shared_list_handler)
         message_handler.start()
