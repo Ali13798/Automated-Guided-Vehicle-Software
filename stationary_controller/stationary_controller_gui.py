@@ -8,9 +8,6 @@ from time import sleep
 from tkinter import ttk
 
 import numpy as np
-
-sys.path.append(".")
-
 from tools.agv_socket import AgvSocket
 
 from stationary_controller.mode import Mode
