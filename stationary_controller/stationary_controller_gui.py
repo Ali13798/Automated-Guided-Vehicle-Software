@@ -9,6 +9,7 @@ from time import sleep
 from tkinter import ttk
 
 import numpy as np
+from onboard_controller.agv_command import AgvCommand
 from tools.agv_socket import AgvSocket
 
 from stationary_controller.mode import Mode
@@ -204,6 +205,7 @@ class GUI(ttk.Frame):
         self.btn_connect_to_server = ttk.Button(
             self.mode_selection_pane,
             text="Connect to Server",
+            style="serverconn.TButton",
             command=self.connect_to_server,
         )
         self.btn_connect_to_server.grid(
@@ -214,9 +216,11 @@ class GUI(ttk.Frame):
         self.client = AgvSocket(
             ip=SERVER_IP, port=SERVER_PORT, isServer=False
         )
-        text = input("Enter message: ")
-        self.client.send_message(text)
-        print(f"[SERVER] {self.client.read_message()}")
+        self.btn_connect_to_server.state(["disabled"])
+        self.style.map(
+            "serverconn.TButton", background=[("disabled", "white")]
+        )
+        self.btn_connect_to_server.config(text="Connected")
 
     def select_teach_mode(self) -> None:
         """Handles selecting the teach mode button."""
@@ -427,17 +431,29 @@ class GUI(ttk.Frame):
         dist = self.txt_intensity_value.get()
         self.turtle.forward(dist)
 
+        text = f"{AgvCommand.forward.value} {dist}"
+        self.client.send_message(text)
+
     def move_backward(self, dist: int = 10):
         dist = self.txt_intensity_value.get()
         self.turtle.backward(dist)
+
+        text = f"{AgvCommand.backward.value} {dist}"
+        self.client.send_message(text)
 
     def rotate_left(self, angle: int = 10):
         angle = self.txt_intensity_value.get()
         self.turtle.left(angle)
 
+        text = f"{AgvCommand.rotate_ccw.value} {angle}"
+        self.client.send_message(text)
+
     def rotate_right(self, angle: int = 10):
         angle = self.txt_intensity_value.get()
         self.turtle.right(angle)
+
+        text = f"{AgvCommand.rotate_cw.value} {angle}"
+        self.client.send_message(text)
 
     def store_waypoint(self):
         x = self.turtle.xcor()
