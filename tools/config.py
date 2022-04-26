@@ -15,7 +15,9 @@ class ControllerConfig:
     socket_establish_connection_message: str
 
 
-def read_config(config_file: str = "configurations.json") -> ControllerConfig:
+def read_config(
+    config_file: str = "configurations.json",
+) -> ControllerConfig:
     with open(config_file, "r") as file:
         data = json.load(file)
         return ControllerConfig(**data)
