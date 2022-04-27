@@ -236,6 +236,9 @@ class GUI(ttk.Frame):
         self.style.map("prod.TButton", background=[("alternate", "#fcc200")])
         self.style.map("teach.TButton", background=[("disabled", "green")])
 
+        # Send to server
+        self.client.send_message(msg="SETMODE TEACH")
+
         # Grid the appropriate pane
         self.update_and_grid_panes()
 
@@ -252,6 +255,9 @@ class GUI(ttk.Frame):
         # Change the background of the selected button
         self.style.map("teach.TButton", background=[("alternate", "#fcc200")])
         self.style.map("prod.TButton", background=[("disabled", "green")])
+
+        # Send to server
+        self.client.send_message(msg="SETMODE AUTO")
 
         # Grid the appropriate pane
         self.update_and_grid_panes()

@@ -35,13 +35,13 @@ class Controller:
         freq = AgvTools.calc_pulse_freq(velocity=2.25)
         duty_cycle = 1
 
-        self.direction = gpiozero.OutputDevice(direction_gpio_bcm)
-        self.left_motor = gpiozero.PWMOutputDevice(
-            left_motor_gpio_bcm, initial_value=duty_cycle, frequency=freq
-        )
-        self.right_motor = gpiozero.PWMOutputDevice(
-            right_motor_gpio_bcm, initial_value=duty_cycle, frequency=freq
-        )
+        # self.direction = gpiozero.OutputDevice(direction_gpio_bcm)
+        # self.left_motor = gpiozero.PWMOutputDevice(
+        #     left_motor_gpio_bcm, initial_value=duty_cycle, frequency=freq
+        # )
+        # self.right_motor = gpiozero.PWMOutputDevice(
+        #     right_motor_gpio_bcm, initial_value=duty_cycle, frequency=freq
+        # )
 
         message_handler = threading.Thread(target=self.shared_list_handler)
         inst_handler = threading.Thread(target=self.instruction_handler)
@@ -86,6 +86,15 @@ class Controller:
             self.server.send_message(em)
             return
 
+        if msg[0] == "SETMODE":
+            if msg[1] == "TEACH":
+                self.mode = Mode.Teach
+                self.velocity = MAX_VELOCITY * 0.2
+            elif msg[1] == "AUTO":
+                self.mode = Mode.Production
+                self.velocity = MAX_VELOCITY
+            return
+
         if msg[0] not in self.valid_commands:
             em = f'[INVALID COMMAND] command "{msg[0]}" is not valid.'
             self.server.send_message(em)
@@ -120,44 +129,53 @@ class Controller:
         command = instruction.command
         value = instruction.value
 
-        acceleration_freqs = self.accelerate()
-        deceleration_freqs = self.accelerate(is_decelerating=True)
+        print(command, value)
 
-        if command is AgvCommand.forward:
-            self.direction.on()
-            t = AgvTools.calc_arc_pulse_num(value)
+        if command == AgvCommand.forward.value:
+            acceleration_freqs = self.accelerate()
+            # self.direction.on()
 
-        elif command is AgvCommand.backward:
+            # freq1 = acceleration_freqs.pop(0)
+            # self.right_motor.frequency = freq1
+            # self.right_motor.frequency = freq1
+            # self.right_motor.blink()
+            # self.left_motor.blink()
+
+            # for freq in acceleration_freqs:
+            #     self.right_motor.frequency = freq
+            #     self.left_motor.frequency = freq
+            #     send_n_pulses = 2
+            #     sleep_time = round(1 / freq * send_n_pulses, 5)
+            #     time.sleep(sleep_time)
+
+            # self.right_motor.off()
+            # self.left_motor.off()
+
+        elif command == AgvCommand.backward.value:
+            deceleration_freqs = self.accelerate(is_decelerating=True)
+
+        elif command == AgvCommand.rotate_cw.value:
             pass
-        elif command is AgvCommand.rotate_cw:
+        elif command == AgvCommand.rotate_ccw.value:
             pass
-        elif command is AgvCommand.rotate_ccw:
-            pass
-        elif command is AgvCommand.calibrate_home:
+        elif command == AgvCommand.calibrate_home.value:
             pass
 
-    def accelerate(is_decelerating: bool = False) -> tuple[int, list[int]]:
-        time_interval = 250
+    def accelerate(self, is_decelerating: bool = False) -> list[int]:
         steps = 10
-        v_inc = float(MAX_VELOCITY / steps)
+        v_inc = float(self.velocity / steps)
 
         frequencies = []
 
-        if is_decelerating:
-            start = steps + 1
-            stop = 1
-            step = -1
-        else:
-            start = 1
-            stop = steps + 1
-            step = 1
-
-        for i in range(start, stop, step):
+        for i in range(1, steps + 1):
             cur_v = v_inc * i
             freq = AgvTools.calc_pulse_freq(cur_v)
             frequencies.append(freq)
 
-        return (time_interval, frequencies)
+        if is_decelerating:
+            frequencies.reverse()
+
+        return frequencies
 
     def emergency_stop(self):
         # stop everything, then clear instruction list.
