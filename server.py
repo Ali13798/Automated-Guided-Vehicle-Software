@@ -7,7 +7,7 @@ from tools.agv_socket import AgvSocket
 
 def main():
     PORT = 1234
-    SERVER = socket.gethostbyname(socket.gethostname())
+    SERVER = socket.gethostbyname(socket.gethostname() + ".local")
 
     server = AgvSocket(ip=SERVER, port=PORT, isServer=True)
 
