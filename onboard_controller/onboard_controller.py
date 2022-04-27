@@ -1,3 +1,4 @@
+import math
 import socket
 import threading
 import time
@@ -9,6 +10,8 @@ from tools.agv_tools import AgvTools
 
 from agv_command import AgvCommand
 from instructions import Instruction
+
+MAX_VELOCITY = 2.25
 
 
 class Controller:
@@ -32,13 +35,13 @@ class Controller:
         freq = AgvTools.calc_pulse_freq(velocity=2.25)
         duty_cycle = 1
 
-        # self.direction = gpiozero.OutputDevice(direction_gpio_bcm)
-        # self.left_motor = gpiozero.PWMOutputDevice(
-        #     left_motor_gpio_bcm, initial_value=duty_cycle, frequency=freq
-        # )
-        # self.right_motor = gpiozero.PWMOutputDevice(
-        #     right_motor_gpio_bcm, initial_value=duty_cycle, frequency=freq
-        # )
+        self.direction = gpiozero.OutputDevice(direction_gpio_bcm)
+        self.left_motor = gpiozero.PWMOutputDevice(
+            left_motor_gpio_bcm, initial_value=duty_cycle, frequency=freq
+        )
+        self.right_motor = gpiozero.PWMOutputDevice(
+            right_motor_gpio_bcm, initial_value=duty_cycle, frequency=freq
+        )
 
         message_handler = threading.Thread(target=self.shared_list_handler)
         inst_handler = threading.Thread(target=self.instruction_handler)
@@ -114,7 +117,48 @@ class Controller:
             self.execute_instruction(inst)
 
     def execute_instruction(self, instruction: Instruction):
-        pass
+        command = instruction.command
+        value = instruction.value
+
+        acceleration_freqs = self.accelerate()
+        deceleration_freqs = self.accelerate(is_decelerating=True)
+
+        if command is AgvCommand.forward:
+            self.direction.on()
+            t = AgvTools.calc_arc_pulse_num(value)
+
+        elif command is AgvCommand.backward:
+            pass
+        elif command is AgvCommand.rotate_cw:
+            pass
+        elif command is AgvCommand.rotate_ccw:
+            pass
+        elif command is AgvCommand.calibrate_home:
+            pass
+
+    def accelerate(is_decelerating: bool = False) -> tuple[int, list[int]]:
+        time_interval = 250
+        ms = round(time_interval * 1000)
+        steps = math.ceil(ms / time_interval)
+        v_inc = float(MAX_VELOCITY / steps)
+
+        frequencies = []
+
+        if is_decelerating:
+            start = steps
+            stop = 1
+            step = -1
+        else:
+            start = 1
+            stop = steps
+            step = 1
+
+        for i in range(start, stop, step):
+            cur_v = v_inc * i
+            freq = AgvTools.calc_pulse_freq(cur_v)
+            frequencies.append(freq)
+
+        return (time_interval, frequencies)
 
     def emergency_stop(self):
         # stop everything, then clear instruction list.
