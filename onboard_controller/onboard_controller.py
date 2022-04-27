@@ -138,19 +138,18 @@ class Controller:
 
     def accelerate(is_decelerating: bool = False) -> tuple[int, list[int]]:
         time_interval = 250
-        ms = round(time_interval * 1000)
-        steps = math.ceil(ms / time_interval)
+        steps = 10
         v_inc = float(MAX_VELOCITY / steps)
 
         frequencies = []
 
         if is_decelerating:
-            start = steps
+            start = steps + 1
             stop = 1
             step = -1
         else:
             start = 1
-            stop = steps
+            stop = steps + 1
             step = 1
 
         for i in range(start, stop, step):
