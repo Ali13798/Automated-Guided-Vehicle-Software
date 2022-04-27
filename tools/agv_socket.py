@@ -151,12 +151,13 @@ class AgvSocket:
 
             print(f"[{addr}] {msg}")
 
+            if msg == self.DISCONNECT_MESSAGE:
+                self.connected = False
+                continue
+
             self.mutex_shared.acquire()
             self.shared_list.append(msg)
             self.mutex_shared.release()
-
-            if msg == self.DISCONNECT_MESSAGE:
-                self.connected = False
 
             # The controller sends back response instead.
             # self.send_message(self.MESSAGE_RECEIVED)
