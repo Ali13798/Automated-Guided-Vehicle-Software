@@ -5,7 +5,8 @@ from tools.agv_socket import AgvSocket
 
 def main():
     PORT = 1234
-    SERVER_IP = socket.gethostbyname(socket.gethostname())
+    # SERVER_IP = socket.gethostbyname(socket.gethostname())
+    SERVER_IP = "192.168.0.160"
 
     client = AgvSocket(ip=SERVER_IP, port=PORT, isServer=False)
     while True:

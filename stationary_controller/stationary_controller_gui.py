@@ -17,8 +17,8 @@ from stationary_controller.styles import AgvStyles
 from stationary_controller.waypoint import Waypoint
 
 # Global Constants
-# SERVER_IP = "192.168.0.160"
-SERVER_IP = socket.gethostbyname(socket.gethostname())
+SERVER_IP = "192.168.0.160"
+# SERVER_IP = socket.gethostbyname(socket.gethostname())
 SERVER_PORT = 1234
 
 
