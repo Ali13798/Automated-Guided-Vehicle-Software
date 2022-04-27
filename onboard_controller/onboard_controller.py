@@ -1,3 +1,4 @@
+import socket
 import threading
 import time
 
@@ -5,7 +6,6 @@ import gpiozero
 from stationary_controller.mode import Mode
 from tools.agv_socket import AgvSocket
 from tools.agv_tools import AgvTools
-from tools.agv_tools import AgvTools as agv_tools
 
 from agv_command import AgvCommand
 from instructions import Instruction
@@ -32,17 +32,17 @@ class Controller:
         freq = AgvTools.calc_pulse_freq(velocity=2.25)
         duty_cycle = 1
 
-        self.direction = gpiozero.OutputDevice(direction_gpio_bcm)
-        self.left_motor = gpiozero.PWMOutputDevice(
-            left_motor_gpio_bcm, initial_value=duty_cycle, frequency=freq
-        )
-        self.right_motor = gpiozero.PWMOutputDevice(
-            right_motor_gpio_bcm, initial_value=duty_cycle, frequency=freq
-        )
+        # self.direction = gpiozero.OutputDevice(direction_gpio_bcm)
+        # self.left_motor = gpiozero.PWMOutputDevice(
+        #     left_motor_gpio_bcm, initial_value=duty_cycle, frequency=freq
+        # )
+        # self.right_motor = gpiozero.PWMOutputDevice(
+        #     right_motor_gpio_bcm, initial_value=duty_cycle, frequency=freq
+        # )
 
         message_handler = threading.Thread(target=self.shared_list_handler)
-        message_handler.start()
         inst_handler = threading.Thread(target=self.instruction_handler)
+        message_handler.start()
         inst_handler.start()
 
     def shared_list_handler(self):
@@ -64,12 +64,14 @@ class Controller:
         self.mutex_instruction.acquire()
         self.instructions.append(inst)
         self.mutex_instruction.release()
+
         self.server.send_message(str(self.instructions))
 
     def consume_instruction(self) -> Instruction:
         self.mutex_instruction.acquire()
         inst = self.instructions.pop(0)
         self.mutex_instruction.release()
+
         return inst
 
     def parse_message(self, msg: str) -> Instruction:
@@ -108,6 +110,7 @@ class Controller:
             self.mutex_shared_list.acquire()
             inst = self.instructions.pop(0)
             self.mutex_shared_list.release()
+
             self.execute_instruction(inst)
 
     def execute_instruction(self, instruction: Instruction):
@@ -119,10 +122,12 @@ class Controller:
 
 
 def main():
-    print(agv_tools.calc_pulse_freq(velocity=2.25))
+    PORT = 1234
+    SERVER = socket.gethostbyname(socket.gethostname() + ".local")
 
-    dist = 10
-    print(agv_tools.calc_pulse_num(dist))
+    server = AgvSocket(ip=SERVER, port=PORT, isServer=True)
+
+    ctrl = Controller(server)
 
 
 if __name__ == "__main__":
