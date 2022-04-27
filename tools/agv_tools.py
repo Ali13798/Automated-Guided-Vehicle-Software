@@ -6,7 +6,7 @@ import gpiozero
 WHEEL_DIAM = 5
 
 # steps per revolution
-STEP_DRIVER_STEPS_PER_REV = 40
+STEP_DRIVER_STEPS_PER_REV = 400
 
 # unit: degrees
 STEP_ANGLE = 360 / STEP_DRIVER_STEPS_PER_REV
