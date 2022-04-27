@@ -1,5 +1,7 @@
 import math
 
+import gpiozero
+
 # unit: inch
 WHEEL_DIAM = 5
 
@@ -27,24 +29,18 @@ class AgvTools:
         # unit: 1/s (Hz)
         pulse_freq = omega_dps / STEP_ANGLE
 
-        # Double since on and off time are separate.
+        # Double since on and off times are separate.
         return int(round(pulse_freq, 0)) * 2
 
-    def calc_pulse_num(inches: float) -> float:
-        # radians
-        angle = inches / (WHEEL_DIAM / 2)
+    def calc_pulse_num_from_dist(inches: float) -> int:
+        angle_r = inches / (WHEEL_DIAM / 2)
+        angle_d = angle_r * 180 / math.pi
+        return int(round(angle_d / STEP_ANGLE, 0))
 
-        # degrees
-        angle = angle * 180 / math.pi
+    def calc_pulse_num_from_freq(freq: float, time_ms: int) -> int:
+        return math.floor(freq * time_ms / 1000)
 
-        return angle / STEP_ANGLE
-
-    def accelerate(time: float = 5.0):
-        return
-        ms = round(time * 1000)
-        v0 = 0
-        vf = MAX_VELOCITY
-        steps = ms / 250
-        for i in range(1, steps):
-            v = 0
-            AgvTools.calc_pulse_freq()
+    def calc_arc_pulse_num(angle: int) -> int:
+        rad = angle / 180 * math.pi
+        arc_length = WHEEL_DIAM / 2 * rad
+        return AgvTools.calc_pulse_num_from_dist(arc_length)
