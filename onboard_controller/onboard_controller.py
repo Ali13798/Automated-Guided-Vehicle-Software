@@ -40,9 +40,13 @@ class Controller:
             right_motor_gpio_bcm, initial_value=duty_cycle, frequency=freq
         )
 
-        message_handler = threading.Thread(target=self.shared_list_handler)
+        message_handler = threading.Thread(
+            target=self.shared_list_handler, daemon=True
+        )
         message_handler.start()
-        inst_handler = threading.Thread(target=self.instruction_handler)
+        inst_handler = threading.Thread(
+            target=self.instruction_handler, daemon=True
+        )
         inst_handler.start()
 
     def shared_list_handler(self):
