@@ -8,8 +8,8 @@ from stationary_controller.mode import Mode
 from tools.agv_socket import AgvSocket
 from tools.agv_tools import AgvTools
 
-from agv_command import AgvCommand
-from instructions import Instruction
+from onboard_controller.agv_command import AgvCommand
+from onboard_controller.instructions import Instruction
 
 MAX_VELOCITY = 2.25
 
