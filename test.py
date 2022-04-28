@@ -9,15 +9,16 @@ SPR = 400
 
 
 def test2():
-    import pigpiod
+    import pigpio
 
-    pi = pigpiod.pi()
+    pi = pigpio.pi()
 
     pi.set_PWM_dutycycle(LEFT, 128)
     pi.set_PWM_dutycycle(RIGHT, 128)
 
-    pi.set_PWM_frequency(LEFT, 100)
-    pi.set_PWM_frequency(LEFT, 100)
+    freq = 500
+    pi.set_PWM_frequency(LEFT, freq)
+    pi.set_PWM_frequency(RIGHT, freq)
 
     try:
         while True:
