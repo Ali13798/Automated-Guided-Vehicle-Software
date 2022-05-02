@@ -43,14 +43,15 @@ def test1():
 
 
 def test2():
-    # import pigpio
+    import pigpio
 
     pi = pigpio.pi()
 
     # pigpio sample rate of 4
     ramp = [[i, 5] for i in [50, 100, 200, 400, 625]]
-    AgvTools.generate_ramp(pi=pi, ramp=ramp, motor_pin=RIGHT)
-    AgvTools.generate_ramp(pi=pi, ramp=ramp, motor_pin=LEFT)
+    AgvTools.generate_ramp(
+        pi=pi, ramp=ramp, right_motor_pin=RIGHT, left_motor_pin=LEFT
+    )
 
     # pi.set_PWM_dutycycle(LEFT, 128)
     # pi.set_PWM_dutycycle(RIGHT, 128)

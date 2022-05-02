@@ -45,7 +45,9 @@ class AgvTools:
         arc_length = WHEEL_DIAM / 2 * rad
         return AgvTools.calc_pulse_num_from_dist(arc_length)
 
-    def generate_ramp(pi: pigpio.pi, ramp: list[int, int], motor_pin):
+    def generate_ramp(
+        pi: pigpio.pi, ramp: list[int, int], left_motor_pin, right_motor_pin
+    ):
         """Generate ramp wave forms.
         ramp:  List of [Frequency, Steps]
 
@@ -53,24 +55,47 @@ class AgvTools:
         """
         pi.wave_clear()  # clear existing waves
         length = len(ramp)  # number of ramp levels
-        wid = [-1] * length
+        widr = [-1] * length
+        widl = [-1] * length
 
         # Generate a wave per ramp level
         for i in range(length):
             frequency = ramp[i][0]
             micros = int(500000 / frequency)
-            wf = []
-            wf.append(pigpio.pulse(1 << motor_pin, 0, micros))  # pulse on
-            wf.append(pigpio.pulse(0, 1 << motor_pin, micros))  # pulse off
-            pi.wave_add_generic(wf)
-            wid[i] = pi.wave_create()
+            wfr = []
+            wfr.append(
+                pigpio.pulse(1 << left_motor_pin, 0, micros)
+            )  # pulse on
+            wfr.append(
+                pigpio.pulse(0, 1 << left_motor_pin, micros)
+            )  # pulse off
+            pi.wave_add_generic(wfr)
+            widr[i] = pi.wave_create()
+
+            wfl = []
+            wfl.append(
+                pigpio.pulse(1 << right_motor_pin, 0, micros)
+            )  # pulse on
+            wfl.append(
+                pigpio.pulse(0, 1 << right_motor_pin, micros)
+            )  # pulse off
+            pi.wave_add_generic(wfl)
+            widl[i] = pi.wave_create()
 
         # Generate a chain of waves
-        chain = []
+        chainr = []
         for i in range(length):
             steps = ramp[i][1]
             x = steps & 255
             y = steps >> 8
-            chain += [255, 0, wid[i], 255, 1, x, y]
+            chainr += [255, 0, widr[i], 255, 1, x, y]
 
-        pi.wave_chain(chain)  # Transmit chain.
+        chainl = []
+        for i in range(length):
+            steps = ramp[i][1]
+            x = steps & 255
+            y = steps >> 8
+            chainl += [255, 0, widl[i], 255, 1, x, y]
+
+        pi.wave_chain(chainr)  # Transmit chain.
+        pi.wave_chain(chainl)  # Transmit chain.
