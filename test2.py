@@ -17,6 +17,17 @@ pi.set_mode(MOTOR, pigpio.OUTPUT)
 rampup = [[i, 50] for i in [50, 100, 200, 400, 625]]
 rampdown = rampup.copy()
 rampdown.reverse()
+testramp = [
+    [10, 50],
+    [10, 100],
+    [10, 200],
+    [10, 400],
+    [18, 625],
+    [10, 400],
+    [10, 200],
+    [10, 100],
+    [10, 50],
+]
 
 
 def generate_ramp(
@@ -70,10 +81,10 @@ try:
             continue
 
         if new_ramp:
-            generate_ramp(ramp=rampup)
+            generate_ramp(ramp=testramp)
             # AgvTools.generate_ramp(pi=pi, motor_pin=MOTOR, ramp=rampup, clear_waves=True)
         else:
-            generate_ramp(ramp=rampdown)
+            generate_ramp(ramp=testramp)
             # AgvTools.generate_ramp(pi=pi, motor_pin=MOTOR, ramp=rampup, clear_waves=True)
         old_ramp = new_ramp
 
