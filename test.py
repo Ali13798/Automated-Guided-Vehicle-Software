@@ -10,13 +10,20 @@ BACKWARD = 1
 SPR = 400
 
 
+MOTOR = 23
+KILL_RIGHT = 24
+KILL_LEFT = 25
+
+
 def test1():
     import RPi.GPIO as GPIO
 
     GPIO.setmode(GPIO.BCM)
     GPIO.setup(DIR, GPIO.OUT)
     # GPIO.setup(LEFT, GPIO.OUT)
-    GPIO.setup(RIGHT, GPIO.OUT)
+    GPIO.setup(MOTOR, GPIO.OUT)
+    GPIO.setup(KILL_RIGHT, GPIO.OUT)
+    GPIO.setup(KILL_LEFT, GPIO.OUT)
 
     GPIO.output(DIR, FORWARD)
 
@@ -25,20 +32,20 @@ def test1():
 
     for x in range(step_count):
         # GPIO.output(LEFT, GPIO.HIGH)
-        GPIO.output(RIGHT, GPIO.HIGH)
+        GPIO.output(MOTOR, GPIO.HIGH)
         sleep(delay)
         # GPIO.output(LEFT, GPIO.LOW)
-        GPIO.output(RIGHT, GPIO.LOW)
+        GPIO.output(MOTOR, GPIO.LOW)
         sleep(delay)
 
     sleep(0.5)
     GPIO.output(DIR, BACKWARD)
     for x in range(step_count):
         # GPIO.output(LEFT, GPIO.HIGH)
-        GPIO.output(RIGHT, GPIO.HIGH)
+        GPIO.output(MOTOR, GPIO.HIGH)
         sleep(delay)
         # GPIO.output(LEFT, GPIO.LOW)
-        GPIO.output(RIGHT, GPIO.LOW)
+        GPIO.output(MOTOR, GPIO.LOW)
         sleep(delay)
 
 
@@ -127,4 +134,4 @@ def test3():
 
 
 if __name__ == "__main__":
-    test3()
+    test1()
