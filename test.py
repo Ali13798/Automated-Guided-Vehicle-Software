@@ -43,14 +43,17 @@ def test1():
 
 
 def test2():
-    import pigpio
+    # import pigpio
 
     pi = pigpio.pi()
 
     # pigpio sample rate of 4
     ramp = [[i, 5] for i in [50, 100, 200, 400, 625]]
     AgvTools.generate_ramp(
-        pi=pi, ramp=ramp, right_motor_pin=RIGHT, left_motor_pin=LEFT
+        pi=pi, ramp=ramp, motor_pin=RIGHT, clear_waves=False
+    )
+    AgvTools.generate_ramp(
+        pi=pi, ramp=ramp, motor_pin=LEFT, clear_waves=False
     )
 
     # pi.set_PWM_dutycycle(LEFT, 128)
@@ -62,14 +65,15 @@ def test2():
 
     try:
         while True:
-            sleep(1)
             print(f"Right freq={pi.get_PWM_frequency(RIGHT)}")
             print(f"Left freq={pi.get_PWM_frequency(LEFT)}")
+            sleep(0.5)
     except KeyboardInterrupt:
         print("\nCtrl-C pressed. Stopping PIGPIO and exitting...")
     finally:
         pi.set_PWM_dutycycle(LEFT, 0)
         pi.set_PWM_dutycycle(RIGHT, 0)
+        pi.wave_clear()
         pi.stop()
 
 
