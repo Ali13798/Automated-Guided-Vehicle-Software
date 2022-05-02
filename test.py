@@ -30,6 +30,8 @@ def test1():
     step_count = SPR
     delay = 1 / SPR
 
+    GPIO.output(KILL_RIGHT, GPIO.HIGH)
+
     for x in range(step_count):
         # GPIO.output(LEFT, GPIO.HIGH)
         GPIO.output(MOTOR, GPIO.HIGH)
@@ -39,6 +41,9 @@ def test1():
         sleep(delay)
 
     sleep(0.5)
+    GPIO.output(KILL_RIGHT, GPIO.LOW)
+    GPIO.output(KILL_LEFT, GPIO.HIGH)
+
     GPIO.output(DIR, BACKWARD)
     for x in range(step_count):
         # GPIO.output(LEFT, GPIO.HIGH)
@@ -47,6 +52,8 @@ def test1():
         # GPIO.output(LEFT, GPIO.LOW)
         GPIO.output(MOTOR, GPIO.LOW)
         sleep(delay)
+
+    GPIO.output(KILL_LEFT, GPIO.LOW)
 
 
 def test2():
