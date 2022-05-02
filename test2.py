@@ -83,9 +83,9 @@ try:
         if new_ramp:
             generate_ramp(ramp=testramp)
             # AgvTools.generate_ramp(pi=pi, motor_pin=MOTOR, ramp=rampup, clear_waves=True)
-        else:
-            generate_ramp(ramp=testramp)
-            # AgvTools.generate_ramp(pi=pi, motor_pin=MOTOR, ramp=rampup, clear_waves=True)
+        # else:
+        # generate_ramp(ramp=testramp)
+        # AgvTools.generate_ramp(pi=pi, motor_pin=MOTOR, ramp=rampup, clear_waves=True)
         old_ramp = new_ramp
 
         print(f"Right freq={pi.get_PWM_frequency(MOTOR)}")
