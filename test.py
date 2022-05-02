@@ -43,7 +43,7 @@ def test1():
 
 
 def test2():
-    # import pigpio
+    import pigpio
 
     pi = pigpio.pi()
 
