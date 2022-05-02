@@ -46,7 +46,10 @@ class AgvTools:
         return AgvTools.calc_pulse_num_from_dist(arc_length)
 
     def generate_ramp(
-        pi: pigpio.pi, ramp: list[int, int], motor_pin: int, clear_waves: bool
+        pi: pigpio.pi,
+        ramp: list[int, int],
+        motor_pin: int,
+        clear_waves: bool = True,
     ):
         """Generate ramp wave forms.
         ramp:  List of [Frequency, Steps]
