@@ -1,6 +1,6 @@
 import math
 
-import gpiozero
+import pigpio
 
 # unit: inch
 WHEEL_DIAM = 5
@@ -44,3 +44,33 @@ class AgvTools:
         rad = angle / 180 * math.pi
         arc_length = WHEEL_DIAM / 2 * rad
         return AgvTools.calc_pulse_num_from_dist(arc_length)
+
+    def generate_ramp(pi: pigpio.pi, ramp: list[int, int], motor_pin):
+        """Generate ramp wave forms.
+        ramp:  List of [Frequency, Steps]
+
+        Note: Sourced from https://www.rototron.info/raspberry-pi-stepper-motor-tutorial/
+        """
+        pi.wave_clear()  # clear existing waves
+        length = len(ramp)  # number of ramp levels
+        wid = [-1] * length
+
+        # Generate a wave per ramp level
+        for i in range(length):
+            frequency = ramp[i][0]
+            micros = int(500000 / frequency)
+            wf = []
+            wf.append(pigpio.pulse(1 << motor_pin, 0, micros))  # pulse on
+            wf.append(pigpio.pulse(0, 1 << motor_pin, micros))  # pulse off
+            pi.wave_add_generic(wf)
+            wid[i] = pi.wave_create()
+
+        # Generate a chain of waves
+        chain = []
+        for i in range(length):
+            steps = ramp[i][1]
+            x = steps & 255
+            y = steps >> 8
+            chain += [255, 0, wid[i], 255, 1, x, y]
+
+        pi.wave_chain(chain)  # Transmit chain.
