@@ -40,10 +40,10 @@ class AgvTools:
     def calc_pulse_num_from_freq(freq: float, time_ms: int) -> int:
         return math.floor(freq * time_ms / 1000)
 
-    def calc_arc_pulse_num(angle: int) -> int:
+    def calc_arc_length(angle: int) -> float:
         rad = angle / 180 * math.pi
         arc_length = WHEEL_DIAM / 2 * rad
-        return AgvTools.calc_pulse_num_from_dist(arc_length)
+        return arc_length
 
     def create_ramp_inputs(inches: float) -> list[list[int, int]]:
         """Generates the acceleration and deceleration frequencies.
