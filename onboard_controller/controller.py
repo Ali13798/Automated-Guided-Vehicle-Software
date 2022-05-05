@@ -1,9 +1,7 @@
-import math
 import socket
 import threading
-import time
 
-import gpiozero
+import pigpio
 from stationary_controller.mode import Mode
 from tools.agv_socket import AgvSocket
 from tools.agv_tools import AgvTools
@@ -28,8 +26,11 @@ class Controller:
 
         server.start_server(self.shared_list, self.mutex_shared_list)
 
-        DIRECTION_GPIO_BCM = 18
-        MOTOR_GPIO_BCM = 24
+        self.DIRECTION_GPIO_BCM = 18
+        self.MOTOR_GPIO_BCM = 24
+
+        # Note: must first run "sudo pigpiod -t 0" in pi terminal.
+        self.pi = pigpio.pi()
 
         message_handler = threading.Thread(target=self.shared_list_handler)
         inst_handler = threading.Thread(target=self.instruction_handler)
@@ -113,11 +114,15 @@ class Controller:
         value = instruction.value
 
         print(command, value, type(command), type(value))
-        ramp_inputs = AgvTools.create_ramp_inputs(inches=value)
-        print(ramp_inputs)
 
         if command == AgvCommand.forward.value:
-            pass
+            ramp_inputs = AgvTools.create_ramp_inputs(inches=value)
+            AgvTools.generate_ramp(
+                pi=self.pi,
+                ramp=ramp_inputs,
+                motor_pin=self.MOTOR_GPIO_BCM,
+                clear_waves=True,
+            )
         elif command == AgvCommand.backward.value:
             pass
         elif command == AgvCommand.rotate_cw.value:
@@ -129,6 +134,7 @@ class Controller:
 
     def emergency_stop(self):
         # stop everything, then clear instruction list.
+        self.pi.wave_clear()
         return
 
 
