@@ -85,12 +85,19 @@ class Controller:
     def parse_message(self, msg: str) -> Instruction:
         msg = msg.split()
         msg = [n.upper() for n in msg]
+
+        if msg[0] == AgvCommand.e_stop.value:
+            em = f"[EMERGENCY STOP] Stopping AGV."
+            self.server.send_message(em)
+            self.emergency_stop()
+            return
+
         if len(msg) != 2:
             em = f"[INVALID COMMAND] Expected 2 words, but got {len(msg)}."
             self.server.send_message(em)
             return
 
-        if msg[0] == "SETMODE":
+        if msg[0] == AgvCommand.set_mode.value:
             if msg[1] == "TEACH":
                 self.mode = Mode.Teach
                 self.velocity = MAX_VELOCITY * 0.2
@@ -179,6 +186,9 @@ class Controller:
     def emergency_stop(self):
         # stop everything, then clear instruction list.
         self.pi.wave_clear()
+        self.left_motor_kill_switch.off()
+        self.right_motor_kill_switch.off()
+        self.backward_direction.off()
         return
 
 
