@@ -1,6 +1,7 @@
 import socket
 import threading
 
+import gpiozero
 import pigpio
 from stationary_controller.mode import Mode
 from tools.agv_socket import AgvSocket
@@ -26,8 +27,23 @@ class Controller:
 
         server.start_server(self.shared_list, self.mutex_shared_list)
 
-        self.DIRECTION_GPIO_BCM = 18
-        self.MOTOR_GPIO_BCM = 24
+        DIRECTION_GPIO_BCM = 18
+        self.MOTOR_GPIO_BCM = 23
+        TOGGLE_LEFT_MOTOR = 24
+        TOGGLE_RIGHT_MOTOR = 25
+
+        try:
+            self.backward_direction = gpiozero.OutputDevice(
+                pin=DIRECTION_GPIO_BCM
+            )
+            self.right_motor_kill_switch = gpiozero.OutputDevice(
+                pin=TOGGLE_LEFT_MOTOR
+            )
+            self.left_motor_kill_switch = gpiozero.OutputDevice(
+                pin=TOGGLE_RIGHT_MOTOR
+            )
+        except gpiozero.exc.BadPinFactory:
+            print("GPIOZERO Bad Pin Factory.")
 
         # Note: must first run "sudo pigpiod -t 0" in pi terminal.
         self.pi = pigpio.pi()
@@ -113,9 +129,20 @@ class Controller:
         command = instruction.command
         value = instruction.value
 
-        print(command, value, type(command), type(value))
+        # print(command, value, type(command), type(value))
 
-        if command == AgvCommand.forward.value:
+        if command in [
+            AgvCommand.forward.value,
+            AgvCommand.backward.value,
+        ]:
+            if command == AgvCommand.forward.value:
+                self.backward_direction.off()
+            else:
+                self.backward_direction.on()
+
+            self.right_motor_kill_switch.off()
+            self.left_motor_kill_switch.off()
+
             ramp_inputs = AgvTools.create_ramp_inputs(inches=value)
             AgvTools.generate_ramp(
                 pi=self.pi,
@@ -123,13 +150,30 @@ class Controller:
                 motor_pin=self.MOTOR_GPIO_BCM,
                 clear_waves=True,
             )
-        elif command == AgvCommand.backward.value:
-            pass
-        elif command == AgvCommand.rotate_cw.value:
-            pass
-        elif command == AgvCommand.rotate_ccw.value:
-            pass
-        elif command == AgvCommand.calibrate_home.value:
+            return
+
+        if command in [
+            AgvCommand.rotate_cw.value,
+            AgvCommand.rotate_ccw.value,
+        ]:
+            if command == AgvCommand.rotate_cw.value:
+                self.right_motor_kill_switch.on()
+                self.left_motor_kill_switch.off()
+            else:
+                self.left_motor_kill_switch.on()
+                self.right_motor_kill_switch.off()
+
+            dist = AgvTools.calc_arc_length(angle=value)
+            ramp_inputs = AgvTools.create_ramp_inputs(inches=dist)
+
+            AgvTools.generate_ramp(
+                pi=self.pi,
+                ramp=ramp_inputs,
+                motor_pin=self.MOTOR_GPIO_BCM,
+                clear_waves=True,
+            )
+
+        if command == AgvCommand.calibrate_home.value:
             pass
 
     def emergency_stop(self):
