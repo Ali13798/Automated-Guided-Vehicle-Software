@@ -237,7 +237,7 @@ class GUI(ttk.Frame):
         self.style.map("teach.TButton", background=[("disabled", "green")])
 
         # Send to server
-        self.client.send_message(msg="SETMODE TEACH")
+        self.client.send_message(msg=f"{AgvCommand.set_mode.value} TEACH")
 
         # Grid the appropriate pane
         self.update_and_grid_panes()
@@ -257,7 +257,7 @@ class GUI(ttk.Frame):
         self.style.map("prod.TButton", background=[("disabled", "green")])
 
         # Send to server
-        self.client.send_message(msg="SETMODE AUTO")
+        self.client.send_message(msg=f"{AgvCommand.set_mode.value} AUTO")
 
         # Grid the appropriate pane
         self.update_and_grid_panes()
@@ -612,7 +612,7 @@ class GUI(ttk.Frame):
         self.btn_emergency_stop = ttk.Button(
             self.teach_pane,
             text="E-Stop",
-            # command=lambda: print(self.waypoints),
+            command=self.emergency_stop,
         )
         self.btn_calibrate_home = ttk.Button(
             self.teach_pane,
@@ -703,6 +703,9 @@ class GUI(ttk.Frame):
 
         # Row 6
         btn_save_route.grid(row=6, column=1)
+
+    def emergency_stop(self):
+        self.client.send_message(AgvCommand.e_stop.value)
 
     def on_click_txt_station_name(self, event):
         self.txt_var_station_name.set("")
