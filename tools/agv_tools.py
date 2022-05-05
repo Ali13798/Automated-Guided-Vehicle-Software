@@ -1,12 +1,12 @@
 import math
 
-import pigpio
+# import pigpio
 
 # unit: inch
 WHEEL_DIAM = 5
 
 # steps per revolution
-STEP_DRIVER_STEPS_PER_REV = 400
+STEP_DRIVER_STEPS_PER_REV = 1000
 
 # unit: degrees
 STEP_ANGLE = 360 / STEP_DRIVER_STEPS_PER_REV
@@ -45,39 +45,84 @@ class AgvTools:
         arc_length = WHEEL_DIAM / 2 * rad
         return AgvTools.calc_pulse_num_from_dist(arc_length)
 
-    def generate_ramp(
-        pi: pigpio.pi,
-        ramp: list[int, int],
-        motor_pin: int,
-        clear_waves: bool = True,
-    ):
-        """Generate ramp wave forms.
-        ramp:  List of [Frequency, Steps]
+    def create_ramp_inputs(inches: float) -> list[list[int, int]]:
+        """Generates the acceleration and deceleration frequencies.
 
-        Note: Sourced from https://www.rototron.info/raspberry-pi-stepper-motor-tutorial/
+        Args:
+            inches (float): distance to be traversed.
+
+        Returns:
+            list[list[int, int]]: list[list[frequency, steps]]
         """
-        if clear_waves:
-            pi.wave_clear()  # clear existing waves
+        output: list[list[int, int]] = []
+        freq_levels = [50, 100, 200, 400, 1000, 1600]
+        steps_per_freq_level = 10
 
-        length = len(ramp)  # number of ramp levels
-        wid = [-1] * length
+        pulse_num = AgvTools.calc_pulse_num_from_dist(inches=inches)
 
-        # Generate a wave per ramp level
-        for i in range(length):
-            frequency = ramp[i][0]
-            micros = int(500000 / frequency)
-            wf = []
-            wf.append(pigpio.pulse(1 << motor_pin, 0, micros))  # pulse on
-            wf.append(pigpio.pulse(0, 1 << motor_pin, micros))  # pulse off
-            pi.wave_add_generic(wf)
-            wid[i] = pi.wave_create()
+        freq_level_index = pulse_num // (steps_per_freq_level * 2)
 
-        # Generate a chain of waves
-        chain = []
-        for i in range(length):
-            steps = ramp[i][1]
-            x = steps & 255
-            y = steps >> 8
-            chain += [255, 0, wid[i], 255, 1, x, y]
+        coast_pulse_num = pulse_num - (freq_level_index * 20)
 
-        pi.wave_chain(chain)  # Transmit chain.
+        if not freq_level_index < len(freq_levels):
+            freq_level_index = len(freq_levels) - 1
+
+        coast_pulse_num = pulse_num - (
+            freq_level_index * steps_per_freq_level * 2
+        )
+
+        for freq_level in freq_levels[:freq_level_index]:
+            output.append([freq_level, steps_per_freq_level])
+
+        if coast_pulse_num:
+            output.append([freq_levels[freq_level_index], coast_pulse_num])
+
+        for freq_level in reversed(freq_levels[:freq_level_index]):
+            output.append([freq_level, steps_per_freq_level])
+
+        return output
+
+    # def generate_ramp(
+    #     pi: pigpio.pi,
+    #     ramp: list[int, int],
+    #     motor_pin: int,
+    #     clear_waves: bool = True,
+    # ):
+    #     """Generate ramp wave forms.
+    #     ramp:  List of [Frequency, Steps]
+
+    #     Note: Sourced from https://www.rototron.info/raspberry-pi-stepper-motor-tutorial/
+    #     """
+    #     if clear_waves:
+    #         pi.wave_clear()  # clear existing waves
+
+    #     length = len(ramp)  # number of ramp levels
+    #     wid = [-1] * length
+
+    #     # Generate a wave per ramp level
+    #     for i in range(length):
+    #         frequency = ramp[i][0]
+    #         micros = int(500000 / frequency)
+    #         wf = []
+    #         wf.append(pigpio.pulse(1 << motor_pin, 0, micros))  # pulse on
+    #         wf.append(pigpio.pulse(0, 1 << motor_pin, micros))  # pulse off
+    #         pi.wave_add_generic(wf)
+    #         wid[i] = pi.wave_create()
+
+    #     # Generate a chain of waves
+    #     chain = []
+    #     for i in range(length):
+    #         steps = ramp[i][1]
+    #         x = steps & 255
+    #         y = steps >> 8
+    #         chain += [255, 0, wid[i], 255, 1, x, y]
+
+    #     pi.wave_chain(chain)  # Transmit chain.
+
+
+def main():
+    print(AgvTools.create_ramp_inputs(inches=10))
+
+
+if __name__ == "__main__":
+    main()
