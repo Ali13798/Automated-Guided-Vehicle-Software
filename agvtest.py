@@ -7,6 +7,9 @@ from tools.agv_tools import AgvTools
 
 left_direction_gpio_bcm = Pin.left_motor_backward_direction.value
 right_direction_gpio_bcm = Pin.right_motor_backward_direction.value
+left_motor_kill_switch = Pin.left_motor_kill_switch.value
+right_motor_kill_switch = Pin.right_motor_kill_switch.value
+
 motors_gpio_bcm = Pin.motors.value
 
 freq = AgvTools.calc_pulse_freq(velocity=2.25)
@@ -16,12 +19,17 @@ print(f"frequency: {freq}\nduty cycle: {duty_cycle}")
 
 direction_left = gpiozero.OutputDevice(left_direction_gpio_bcm)
 direction_right = gpiozero.OutputDevice(right_direction_gpio_bcm)
+kill_right = gpiozero.OutputDevice(right_motor_kill_switch)
+kill_left = gpiozero.OutputDevice(left_motor_kill_switch)
 motors = gpiozero.PWMOutputDevice(
     motors_gpio_bcm, initial_value=duty_cycle, frequency=freq
 )
 
 direction_left.on()
-direction_right.on()
+direction_right.off()
+
+kill_right.on()
+kill_left.off()
 
 motors.blink(on_time=1 / freq, off_time=1 / freq)
 
