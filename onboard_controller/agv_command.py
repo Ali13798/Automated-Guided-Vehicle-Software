@@ -6,6 +6,7 @@ class AgvCommand(Enum):
     valid_command = "!VALID"
     e_stop = "!ESTOP"
     set_mode = "!SETMODE"
+    halt = "!HALT"
 
     forward = "FORWARD"
     backward = "BACKWARD"

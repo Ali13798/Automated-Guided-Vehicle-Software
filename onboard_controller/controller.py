@@ -24,6 +24,7 @@ class Controller:
         self.mutex_instruction = threading.Lock()
         self.instructions: list[Instruction] = []
         self.valid_commands = [cmd.value for cmd in AgvCommand]
+        self.is_halted = False
 
         server.start_server(self.shared_list, self.mutex_shared_list)
 
@@ -87,10 +88,21 @@ class Controller:
         msg = [n.upper() for n in msg]
 
         if msg[0] == AgvCommand.e_stop.value:
-            em = f"[EMERGENCY STOP] Stopping AGV."
+            em = "[EMERGENCY STOP] Stopping AGV..."
             self.server.send_message(em)
             self.emergency_stop()
             return
+
+        if msg[0] == AgvCommand.halt.value:
+            if not self.is_halted:
+                em = "[HALT] Halting AGV..."
+                self.server.send_message(em)
+                self.is_halted = True
+                return
+
+            em = "[HALT] Removing AGV Halt..."
+            self.server.send_message(em)
+            self.is_halted = False
 
         if len(msg) != 2:
             em = f"[INVALID COMMAND] Expected 2 words, but got {len(msg)}."
@@ -124,6 +136,9 @@ class Controller:
     def instruction_handler(self):
         while self.server.connected:
             if not len(self.instructions) > 0:
+                continue
+
+            if self.is_halted:
                 continue
 
             self.mutex_shared_list.acquire()

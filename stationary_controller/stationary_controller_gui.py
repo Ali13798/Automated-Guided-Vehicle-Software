@@ -607,7 +607,7 @@ class GUI(ttk.Frame):
         self.btn_halt = ttk.Button(
             self.teach_pane,
             text="Halt",
-            # command=,
+            command=self.halt,
         )
         self.btn_emergency_stop = ttk.Button(
             self.teach_pane,
@@ -703,6 +703,9 @@ class GUI(ttk.Frame):
 
         # Row 6
         btn_save_route.grid(row=6, column=1)
+
+    def halt(self):
+        self.client.send_message(AgvCommand.halt.value)
 
     def emergency_stop(self):
         self.client.send_message(AgvCommand.e_stop.value)
