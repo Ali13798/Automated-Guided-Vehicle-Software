@@ -612,6 +612,7 @@ class GUI(ttk.Frame):
         self.btn_emergency_stop = ttk.Button(
             self.teach_pane,
             text="E-Stop",
+            style="estop.TButton",
             command=self.emergency_stop,
         )
         self.btn_calibrate_home = ttk.Button(
