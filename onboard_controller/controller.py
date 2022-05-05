@@ -28,20 +28,8 @@ class Controller:
 
         server.start_server(self.shared_list, self.mutex_shared_list)
 
-        direction_gpio_bcm = 18
-        left_motor_gpio_bcm = 24
-        right_motor_gpio_bcm = 23
-
-        freq = AgvTools.calc_pulse_freq(velocity=2.25)
-        duty_cycle = 1
-
-        # self.direction = gpiozero.OutputDevice(direction_gpio_bcm)
-        # self.left_motor = gpiozero.PWMOutputDevice(
-        #     left_motor_gpio_bcm, initial_value=duty_cycle, frequency=freq
-        # )
-        # self.right_motor = gpiozero.PWMOutputDevice(
-        #     right_motor_gpio_bcm, initial_value=duty_cycle, frequency=freq
-        # )
+        DIRECTION_GPIO_BCM = 18
+        MOTOR_GPIO_BCM = 24
 
         message_handler = threading.Thread(target=self.shared_list_handler)
         inst_handler = threading.Thread(target=self.instruction_handler)
@@ -80,7 +68,6 @@ class Controller:
     def parse_message(self, msg: str) -> Instruction:
         msg = msg.split()
         msg = [n.upper() for n in msg]
-        # print(msg)
         if len(msg) != 2:
             em = f"[INVALID COMMAND] Expected 2 words, but got {len(msg)}."
             self.server.send_message(em)
@@ -104,14 +91,10 @@ class Controller:
             int(msg[1])
         except ValueError:
             em = f'[INVALID COMMAND] expected a number as second term, but got "{msg[1]}."'
-            # print()
             self.server.send_message(em)
             return
 
-        # TODO: FInd the actual command corresponding with the msg
-        inst = Instruction(command=msg[0], value=msg[1])
-        # self.server.send_message(AgvCommand.valid_command.value)
-
+        inst = Instruction(command=msg[0], value=float(msg[1]))
         return inst
 
     def instruction_handler(self):
@@ -129,53 +112,20 @@ class Controller:
         command = instruction.command
         value = instruction.value
 
-        print(command, value)
+        print(command, value, type(command), type(value))
+        ramp_inputs = AgvTools.create_ramp_inputs(inches=value)
+        print(ramp_inputs)
 
         if command == AgvCommand.forward.value:
-            acceleration_freqs = self.accelerate()
-            # self.direction.on()
-
-            # freq1 = acceleration_freqs.pop(0)
-            # self.right_motor.frequency = freq1
-            # self.right_motor.frequency = freq1
-            # self.right_motor.blink()
-            # self.left_motor.blink()
-
-            # for freq in acceleration_freqs:
-            #     self.right_motor.frequency = freq
-            #     self.left_motor.frequency = freq
-            #     send_n_pulses = 2
-            #     sleep_time = round(1 / freq * send_n_pulses, 5)
-            #     time.sleep(sleep_time)
-
-            # self.right_motor.off()
-            # self.left_motor.off()
-
+            pass
         elif command == AgvCommand.backward.value:
-            deceleration_freqs = self.accelerate(is_decelerating=True)
-
+            pass
         elif command == AgvCommand.rotate_cw.value:
             pass
         elif command == AgvCommand.rotate_ccw.value:
             pass
         elif command == AgvCommand.calibrate_home.value:
             pass
-
-    def accelerate(self, is_decelerating: bool = False) -> list[int]:
-        steps = 10
-        v_inc = float(self.velocity / steps)
-
-        frequencies = []
-
-        for i in range(1, steps + 1):
-            cur_v = v_inc * i
-            freq = AgvTools.calc_pulse_freq(cur_v)
-            frequencies.append(freq)
-
-        if is_decelerating:
-            frequencies.reverse()
-
-        return frequencies
 
     def emergency_stop(self):
         # stop everything, then clear instruction list.
