@@ -1,5 +1,6 @@
 import socket
 import threading
+import time
 
 import gpiozero
 import pigpio
@@ -24,7 +25,11 @@ class Controller:
         self.mutex_instruction = threading.Lock()
         self.instructions: list[Instruction] = []
         self.valid_commands = [cmd.value for cmd in AgvCommand]
+
+        # Flags
+        self.is_e_stopped = False
         self.is_halted = False
+        self.is_agv_busy = False
 
         server.start_server(self.shared_list, self.mutex_shared_list)
 
@@ -57,6 +62,7 @@ class Controller:
     def shared_list_handler(self):
         while self.server.connected:
             if not len(self.shared_list) > 0:
+                time.sleep(0.1)
                 continue
 
             self.mutex_shared_list.acquire()
@@ -88,10 +94,15 @@ class Controller:
         msg = [n.upper() for n in msg]
 
         if msg[0] == AgvCommand.e_stop.value:
-            em = "[EMERGENCY STOP] Stopping AGV..."
+            if not self.is_e_stopped:
+                em = "[EMERGENCY STOP] E-Stopping AGV..."
+                self.server.send_message(em)
+                self.emergency_stop()
+                return
+
+            em = "[EMERGENCY STOP] Removing E-Stop..."
             self.server.send_message(em)
-            self.emergency_stop()
-            return
+            self.is_e_stopped = False
 
         if msg[0] == AgvCommand.halt.value:
             if not self.is_halted:
@@ -136,6 +147,7 @@ class Controller:
     def instruction_handler(self):
         while self.server.connected:
             if not len(self.instructions) > 0:
+                time.sleep(0.1)
                 continue
 
             if self.is_halted:
@@ -145,9 +157,15 @@ class Controller:
             inst = self.instructions.pop(0)
             self.mutex_shared_list.release()
 
+            while self.is_agv_busy:
+                time.sleep(0.1)
+                continue
+
             self.execute_instruction(inst)
 
     def execute_instruction(self, instruction: Instruction):
+        self.is_agv_busy = True
+
         command = instruction.command
         value = instruction.value
 
@@ -198,8 +216,13 @@ class Controller:
         if command == AgvCommand.calibrate_home.value:
             pass
 
+        # TODO: use pigpio callback tally to count rising edge
+        # and compare with number of pulses. Then reset tally.
+        self.is_agv_busy = False
+
     def emergency_stop(self):
         # stop everything, then clear instruction list.
+        self.is_e_stopped = True
         self.pi.wave_clear()
         self.left_motor_kill_switch.off()
         self.right_motor_kill_switch.off()
