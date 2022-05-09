@@ -10,6 +10,7 @@ from tools.agv_tools import AgvTools
 
 from onboard_controller.agv_command import AgvCommand
 from onboard_controller.instructions import Instruction
+from onboard_controller.pi_bcm_pin_assignment import Pin
 
 MAX_VELOCITY = 2.25
 
@@ -33,20 +34,24 @@ class Controller:
 
         server.start_server(self.shared_list, self.mutex_shared_list)
 
-        DIRECTION_GPIO_BCM = 18
-        self.MOTOR_GPIO_BCM = 23
-        TOGGLE_LEFT_MOTOR = 24
-        TOGGLE_RIGHT_MOTOR = 25
+        LDBW_BCM = Pin.left_motor_backward_direction
+        RDBW_BCM = Pin.right_motor_backward_direction
+
+        self.MOTOR_GPIO_BCM = Pin.motors
+
+        TOGGLE_LEFT_MOTOR = Pin.left_motor_kill_switch
+        TOGGLE_RIGHT_MOTOR = Pin.right_motor_kill_switch
 
         try:
-            self.backward_direction = gpiozero.OutputDevice(
-                pin=DIRECTION_GPIO_BCM
-            )
+            self.backward_directions = [
+                gpiozero.OutputDevice(pin=LDBW_BCM),
+                gpiozero.OutputDevice(pin=RDBW_BCM),
+            ]
             self.right_motor_kill_switch = gpiozero.OutputDevice(
-                pin=TOGGLE_LEFT_MOTOR
+                pin=TOGGLE_RIGHT_MOTOR
             )
             self.left_motor_kill_switch = gpiozero.OutputDevice(
-                pin=TOGGLE_RIGHT_MOTOR
+                pin=TOGGLE_LEFT_MOTOR
             )
         except gpiozero.exc.BadPinFactory:
             print("GPIOZERO Bad Pin Factory.")
@@ -176,9 +181,11 @@ class Controller:
             AgvCommand.backward.value,
         ]:
             if command == AgvCommand.forward.value:
-                self.backward_direction.off()
+                for dir in self.backward_directions:
+                    dir.off()
             else:
-                self.backward_direction.on()
+                for dir in self.backward_directions:
+                    dir.on()
 
             self.right_motor_kill_switch.off()
             self.left_motor_kill_switch.off()
@@ -226,7 +233,8 @@ class Controller:
         self.pi.wave_clear()
         self.left_motor_kill_switch.off()
         self.right_motor_kill_switch.off()
-        self.backward_direction.off()
+        for dir in self.backward_directions:
+            dir.off()
         return
 
 
