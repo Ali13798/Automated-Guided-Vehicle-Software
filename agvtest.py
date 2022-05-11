@@ -28,7 +28,7 @@ motors = gpiozero.PWMOutputDevice(
 direction_left.on()
 direction_right.off()
 
-kill_right.on()
+kill_right.off()
 kill_left.off()
 
 motors.blink(on_time=1 / freq, off_time=1 / freq)
