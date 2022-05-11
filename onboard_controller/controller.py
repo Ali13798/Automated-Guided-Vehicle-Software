@@ -62,6 +62,7 @@ class Controller:
         self.motors_edge_counter = self.pi.callback(
             user_gpio=self.MOTORS_GPIO_BCM
         )
+        self.expected_pulse_count = 0
 
         message_handler = threading.Thread(target=self.shared_list_handler)
         inst_handler = threading.Thread(target=self.instruction_handler)
@@ -69,7 +70,7 @@ class Controller:
         inst_handler.start()
 
         inst = Instruction(command=AgvCommand.forward, value=10)
-        # self.execute_instruction(inst)
+        self.execute_instruction(inst)
         time.sleep(2)
         print(self.motors_edge_counter.tally())
 
@@ -172,6 +173,16 @@ class Controller:
             inst = self.instructions.pop(0)
             self.mutex_shared_list.release()
 
+            while self.is_agv_busy:
+                cur_pulse_count = self.motors_edge_counter.tally()
+                if cur_pulse_count != self.expected_pulse_count:
+                    time.sleep(0.25)
+                    continue
+
+                self.expected_pulse_count = 0
+                self.motors_edge_counter.reset_tally()
+                self.is_agv_busy = False
+
             self.execute_instruction(inst)
 
     def execute_instruction(self, instruction: Instruction):
@@ -180,9 +191,11 @@ class Controller:
         command = instruction.command
         value = instruction.value
 
-        expected_pulse_count = AgvTools.calc_pulse_num_from_dist(inches=value)
+        self.expected_pulse_count = AgvTools.calc_pulse_num_from_dist(
+            inches=value
+        )
 
-        # print(command, value, type(command), type(value))
+        print(command, value, type(command), type(value))
 
         if command in [
             AgvCommand.forward.value,
@@ -205,8 +218,9 @@ class Controller:
                 motor_pin=self.MOTORS_GPIO_BCM,
                 clear_waves=True,
             )
+            return
 
-        elif command in [
+        if command in [
             AgvCommand.rotate_cw.value,
             AgvCommand.rotate_ccw.value,
         ]:
@@ -226,21 +240,10 @@ class Controller:
                 motor_pin=self.MOTORS_GPIO_BCM,
                 clear_waves=True,
             )
-
-        elif command == AgvCommand.calibrate_home.value:
-            pass
-
-        while self.is_agv_busy:
-            cur_pulse_count = self.motors_edge_counter.tally()
-            print("talley", self.motors_edge_counter.tally())
-            if cur_pulse_count != expected_pulse_count:
-                time.sleep(0.25)
-                continue
-            print("DONE")
-            expected_pulse_count = 0
-            self.motors_edge_counter.reset_tally()
-            self.is_agv_busy = False
             return
+
+        if command == AgvCommand.calibrate_home.value:
+            pass
 
     def emergency_stop(self):
         # stop everything, then clear instruction list.
