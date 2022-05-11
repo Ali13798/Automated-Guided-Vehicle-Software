@@ -165,6 +165,8 @@ class Controller:
                 time.sleep(0.25)
                 continue
 
+            print(self.instructions)
+
             self.mutex_shared_list.acquire()
             inst = self.instructions.pop(0)
             self.mutex_shared_list.release()
@@ -172,7 +174,7 @@ class Controller:
             while self.is_agv_busy and self.server.connected:
                 time.sleep(0.25)
                 continue
-
+            print("EXECUTING")
             self.execute_instruction(inst)
 
     def execute_instruction(self, instruction: Instruction):
@@ -208,6 +210,7 @@ class Controller:
                 motor_pin=self.MOTORS_GPIO_BCM,
                 clear_waves=True,
             )
+            print("FORWARD OR BACKWARD GENERATED")
 
         elif command in [
             AgvCommand.rotate_cw.value,
@@ -245,12 +248,12 @@ class Controller:
                 )
                 time.sleep(0.25)
 
-            else:
-                expected_pulse_count = 0
-                self.motors_edge_counter.reset_tally()
-                self.is_agv_busy = False
-                print("DONE")
-                return
+            # else:
+            #     expected_pulse_count = 0
+            #     self.motors_edge_counter.reset_tally()
+            #     self.is_agv_busy = False
+            #     print("DONE")
+            #     return
 
     def emergency_stop(self):
         # stop everything, then clear instruction list.
