@@ -34,17 +34,17 @@ class Controller:
 
         server.start_server(self.shared_list, self.mutex_shared_list)
 
+        self.MOTORS_GPIO_BCM = Pin.motors
+
         LDBW_BCM = Pin.left_motor_backward_direction
         RDBW_BCM = Pin.right_motor_backward_direction
-
-        self.MOTOR_GPIO_BCM = Pin.motors
 
         TOGGLE_LEFT_MOTOR = Pin.left_motor_kill_switch
         TOGGLE_RIGHT_MOTOR = Pin.right_motor_kill_switch
 
         try:
             self.backward_directions = [
-                gpiozero.OutputDevice(pin=LDBW_BCM),
+                gpiozero.OutputDevice(pin=LDBW_BCM, active_high=False),
                 gpiozero.OutputDevice(pin=RDBW_BCM),
             ]
             self.right_motor_kill_switch = gpiozero.OutputDevice(
@@ -58,6 +58,8 @@ class Controller:
 
         # Note: must first run "sudo pigpiod -t 0" in pi terminal.
         self.pi = pigpio.pi()
+        self.motors_edge_counter = self.pi.callback(self.MOTORS_GPIO_BCM)
+        self.expected_pulse_count = 0
 
         message_handler = threading.Thread(target=self.shared_list_handler)
         inst_handler = threading.Thread(target=self.instruction_handler)
@@ -67,7 +69,7 @@ class Controller:
     def shared_list_handler(self):
         while self.server.connected:
             if not len(self.shared_list) > 0:
-                time.sleep(0.1)
+                time.sleep(0.25)
                 continue
 
             self.mutex_shared_list.acquire()
@@ -152,10 +154,11 @@ class Controller:
     def instruction_handler(self):
         while self.server.connected:
             if not len(self.instructions) > 0:
-                time.sleep(0.1)
+                time.sleep(0.25)
                 continue
 
             if self.is_halted:
+                time.sleep(0.25)
                 continue
 
             self.mutex_shared_list.acquire()
@@ -163,8 +166,14 @@ class Controller:
             self.mutex_shared_list.release()
 
             while self.is_agv_busy:
-                time.sleep(0.1)
-                continue
+                cur_pulse_count = self.motors_edge_counter.tally()
+                if cur_pulse_count != self.expected_pulse_count:
+                    time.sleep(0.25)
+                    continue
+
+                self.expected_pulse_count = 0
+                self.motors_edge_counter.reset_tally()
+                self.is_agv_busy = False
 
             self.execute_instruction(inst)
 
@@ -173,6 +182,10 @@ class Controller:
 
         command = instruction.command
         value = instruction.value
+
+        self.expected_pulse_count = AgvTools.calc_pulse_num_from_dist(
+            inches=value
+        )
 
         # print(command, value, type(command), type(value))
 
@@ -194,7 +207,7 @@ class Controller:
             AgvTools.generate_ramp(
                 pi=self.pi,
                 ramp=ramp_inputs,
-                motor_pin=self.MOTOR_GPIO_BCM,
+                motor_pin=self.MOTORS_GPIO_BCM,
                 clear_waves=True,
             )
             return
@@ -216,16 +229,13 @@ class Controller:
             AgvTools.generate_ramp(
                 pi=self.pi,
                 ramp=ramp_inputs,
-                motor_pin=self.MOTOR_GPIO_BCM,
+                motor_pin=self.MOTORS_GPIO_BCM,
                 clear_waves=True,
             )
+            return
 
         if command == AgvCommand.calibrate_home.value:
             pass
-
-        # TODO: use pigpio callback tally to count rising edge
-        # and compare with number of pulses. Then reset tally.
-        self.is_agv_busy = False
 
     def emergency_stop(self):
         # stop everything, then clear instruction list.
