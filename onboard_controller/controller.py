@@ -43,10 +43,10 @@ class Controller:
         TOGGLE_RIGHT_MOTOR = Pin.right_motor_kill_switch.value
 
         try:
-            ldbw = gpiozero.OutputDevice(pin=LDBW_BCM, active_high=False)
-            rdbw = gpiozero.OutputDevice(pin=RDBW_BCM)
+            ld = gpiozero.OutputDevice(pin=LDBW_BCM, active_high=False)
+            rd = gpiozero.OutputDevice(pin=RDBW_BCM)
 
-            self.backward_directions = [ldbw, rdbw]
+            self.backward_directions = [ld, rd]
             self.right_motor_kill_switch = gpiozero.OutputDevice(
                 pin=TOGGLE_RIGHT_MOTOR
             )
@@ -56,9 +56,12 @@ class Controller:
         except gpiozero.exc.BadPinFactory:
             print("GPIOZERO Bad Pin Factory.")
 
-        # Note: must first run "sudo pigpiod -t 0" in pi terminal.
+        # Note: must first run "sudo pigpiod -t 0 -s 4" in pi terminal. \
+        # The -s 4 option selects sample rate of 4 (rows of the freq table)
         self.pi = pigpio.pi()
-        self.motors_edge_counter = self.pi.callback(self.MOTORS_GPIO_BCM)
+        self.motors_edge_counter = self.pi.callback(
+            user_gpio=self.MOTORS_GPIO_BCM
+        )
         self.expected_pulse_count = 0
 
         message_handler = threading.Thread(target=self.shared_list_handler)
@@ -255,6 +258,8 @@ def main():
     server = AgvSocket(ip=SERVER, port=PORT, isServer=True)
 
     ctrl = Controller(server)
+
+    input()
 
 
 if __name__ == "__main__":

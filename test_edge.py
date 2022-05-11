@@ -24,7 +24,7 @@ kill_left = gpiozero.OutputDevice(left_motor_kill_switch)
 # Connect to pigpiod daemon. Must first execute the following
 # commands in a terminal window without " marks:
 # "sudo killall pigpiod"
-# "sudo pigpiod -t 0"
+# "sudo pigpiod -t 0 -s 4"
 pi = pigpio.pi()
 
 # Set up pins as an output
