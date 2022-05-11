@@ -163,8 +163,6 @@ class Controller:
                 time.sleep(0.25)
                 continue
 
-            print(self.instructions)
-
             self.mutex_shared_list.acquire()
             inst = self.instructions.pop(0)
             self.mutex_shared_list.release()
@@ -172,7 +170,7 @@ class Controller:
             while self.is_agv_busy and self.server.connected:
                 time.sleep(0.25)
                 continue
-            print("EXECUTING")
+
             self.execute_instruction(inst)
 
     def execute_instruction(self, instruction: Instruction):
@@ -182,8 +180,6 @@ class Controller:
         value = instruction.value
 
         expected_pulse_count = AgvTools.calc_pulse_num_from_dist(inches=value)
-
-        # print(command, value, type(command), type(value))
 
         if command in [
             AgvCommand.forward.value,
@@ -208,7 +204,6 @@ class Controller:
                 motor_pin=self.MOTORS_GPIO_BCM,
                 clear_waves=True,
             )
-            print("FORWARD OR BACKWARD GENERATED")
 
         elif command in [
             AgvCommand.rotate_cw.value,
