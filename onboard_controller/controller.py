@@ -43,10 +43,10 @@ class Controller:
         TOGGLE_RIGHT_MOTOR = Pin.right_motor_kill_switch
 
         try:
-            self.backward_directions = [
-                gpiozero.OutputDevice(pin=LDBW_BCM, active_high=False),
-                gpiozero.OutputDevice(pin=RDBW_BCM),
-            ]
+            ldbw = gpiozero.OutputDevice(pin=LDBW_BCM, active_high=False)
+            rdbw = gpiozero.OutputDevice(pin=RDBW_BCM)
+
+            self.backward_directions = [ldbw, rdbw]
             self.right_motor_kill_switch = gpiozero.OutputDevice(
                 pin=TOGGLE_RIGHT_MOTOR
             )
