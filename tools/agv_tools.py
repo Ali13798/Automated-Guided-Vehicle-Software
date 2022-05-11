@@ -57,7 +57,6 @@ class AgvTools:
         output: list[list[int, int]] = []
         freq_levels = [50, 100, 160, 200, 320, 400, 500, 800, 1000, 1600]
         freq_levels = [50, 100, 200, 400, 500, 625, 1000, 1250, 2000]
-        freq_levels = [2000]
         steps_per_freq_level = 100
 
         pulse_num = AgvTools.calc_pulse_num_from_dist(inches=inches)
