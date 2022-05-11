@@ -17,7 +17,9 @@ freq = 20
 duty_cycle = 1
 print(f"frequency: {freq}\nduty cycle: {duty_cycle}")
 
-direction_left = gpiozero.OutputDevice(left_direction_gpio_bcm)
+direction_left = gpiozero.OutputDevice(
+    left_direction_gpio_bcm, active_high=False
+)
 direction_right = gpiozero.OutputDevice(right_direction_gpio_bcm)
 kill_right = gpiozero.OutputDevice(right_motor_kill_switch)
 kill_left = gpiozero.OutputDevice(left_motor_kill_switch)
@@ -25,7 +27,7 @@ motors = gpiozero.PWMOutputDevice(
     motors_gpio_bcm, initial_value=duty_cycle, frequency=freq
 )
 
-direction_left.on()
+direction_left.off()
 direction_right.off()
 
 kill_right.off()
