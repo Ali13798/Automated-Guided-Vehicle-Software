@@ -13,8 +13,6 @@ def main():
 
     ctrl = Controller(server)
 
-    input()
-
 
 if __name__ == "__main__":
     main()
