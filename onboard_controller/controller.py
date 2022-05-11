@@ -69,6 +69,11 @@ class Controller:
         message_handler.start()
         inst_handler.start()
 
+        inst = Instruction(command=AgvCommand.forward, value=10)
+        self.execute_instruction(inst)
+        time.sleep(2)
+        print(self.motors_edge_counter.tally())
+
     def shared_list_handler(self):
         while self.server.connected:
             if not len(self.shared_list) > 0:
@@ -190,7 +195,7 @@ class Controller:
             inches=value
         )
 
-        # print(command, value, type(command), type(value))
+        print(command, value, type(command), type(value))
 
         if command in [
             AgvCommand.forward.value,
