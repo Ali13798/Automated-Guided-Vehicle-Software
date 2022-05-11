@@ -62,8 +62,6 @@ class Controller:
         self.motors_edge_counter = self.pi.callback(
             user_gpio=self.MOTORS_GPIO_BCM
         )
-        self.motors_edge_counter.tally()
-        self.motors_edge_counter.reset_tally()
 
         message_handler = threading.Thread(target=self.shared_list_handler)
         inst_handler = threading.Thread(target=self.instruction_handler)
@@ -243,16 +241,12 @@ class Controller:
         while self.is_agv_busy and self.server.connected:
             cur_pulse_count = self.motors_edge_counter.tally()
             if cur_pulse_count != expected_pulse_count:
-                print(
-                    f"Current Pulse: {cur_pulse_count}\nExpected: {expected_pulse_count}"
-                )
                 time.sleep(0.25)
                 continue
 
             expected_pulse_count = 0
             self.motors_edge_counter.reset_tally()
             self.is_agv_busy = False
-            print("DONE")
             return
 
     def emergency_stop(self):
