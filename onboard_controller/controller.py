@@ -43,10 +43,10 @@ class Controller:
         TOGGLE_RIGHT_MOTOR = Pin.right_motor_kill_switch.value
 
         try:
-            ld = gpiozero.OutputDevice(pin=LDBW_BCM, active_high=False)
-            rd = gpiozero.OutputDevice(pin=RDBW_BCM)
-
-            self.backward_directions = [ld, rd]
+            self.backward_directions = [
+                gpiozero.OutputDevice(pin=LDBW_BCM, active_high=False),
+                gpiozero.OutputDevice(pin=RDBW_BCM),
+            ]
             self.right_motor_kill_switch = gpiozero.OutputDevice(
                 pin=TOGGLE_RIGHT_MOTOR
             )
@@ -195,9 +195,11 @@ class Controller:
             if command == AgvCommand.forward.value:
                 for dir in self.backward_directions:
                     dir.off()
+                    time.sleep(0.050)
             else:
                 for dir in self.backward_directions:
                     dir.on()
+                    time.sleep(0.050)
 
             self.right_motor_kill_switch.off()
             self.left_motor_kill_switch.off()
@@ -218,8 +220,12 @@ class Controller:
                 self.right_motor_kill_switch.on()
                 self.left_motor_kill_switch.off()
             else:
-                self.left_motor_kill_switch.on()
                 self.right_motor_kill_switch.off()
+                self.left_motor_kill_switch.on()
+
+            for dir in self.backward_directions:
+                dir.off()
+                time.sleep(0.050)
 
             dist = AgvTools.calc_arc_length(angle=value)
             ramp_inputs = AgvTools.create_ramp_inputs(inches=dist)
