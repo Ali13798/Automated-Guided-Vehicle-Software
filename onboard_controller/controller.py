@@ -62,6 +62,7 @@ class Controller:
         self.motors_edge_counter = self.pi.callback(
             user_gpio=self.MOTORS_GPIO_BCM
         )
+        time.sleep(1)
 
         message_handler = threading.Thread(target=self.shared_list_handler)
         inst_handler = threading.Thread(target=self.instruction_handler)
