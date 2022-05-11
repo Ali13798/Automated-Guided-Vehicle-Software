@@ -34,13 +34,13 @@ class Controller:
 
         server.start_server(self.shared_list, self.mutex_shared_list)
 
-        self.MOTORS_GPIO_BCM = Pin.motors
+        self.MOTORS_GPIO_BCM = Pin.motors.value
 
-        LDBW_BCM = Pin.left_motor_backward_direction
-        RDBW_BCM = Pin.right_motor_backward_direction
+        LDBW_BCM = Pin.left_motor_backward_direction.value
+        RDBW_BCM = Pin.right_motor_backward_direction.value
 
-        TOGGLE_LEFT_MOTOR = Pin.left_motor_kill_switch
-        TOGGLE_RIGHT_MOTOR = Pin.right_motor_kill_switch
+        TOGGLE_LEFT_MOTOR = Pin.left_motor_kill_switch.value
+        TOGGLE_RIGHT_MOTOR = Pin.right_motor_kill_switch.value
 
         try:
             ldbw = gpiozero.OutputDevice(pin=LDBW_BCM, active_high=False)
