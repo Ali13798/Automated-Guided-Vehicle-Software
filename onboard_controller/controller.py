@@ -68,11 +68,6 @@ class Controller:
         message_handler.start()
         inst_handler.start()
 
-        inst = Instruction(command=AgvCommand.forward, value=10)
-        # self.execute_instruction(inst)
-        time.sleep(2)
-        print(self.motors_edge_counter.tally())
-
     def shared_list_handler(self):
         while self.server.connected:
             if not len(self.shared_list) > 0:
@@ -243,11 +238,15 @@ class Controller:
         while self.is_agv_busy and self.server.connected:
             cur_pulse_count = self.motors_edge_counter.tally()
             if cur_pulse_count != expected_pulse_count:
+                print(
+                    f"Current Pulse: {cur_pulse_count}\nExpected: {expected_pulse_count}"
+                )
                 time.sleep(0.25)
                 continue
             expected_pulse_count = 0
             self.motors_edge_counter.reset_tally()
             self.is_agv_busy = False
+            print("DONE")
             return
 
     def emergency_stop(self):
