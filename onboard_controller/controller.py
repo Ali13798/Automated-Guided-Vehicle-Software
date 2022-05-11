@@ -247,13 +247,13 @@ class Controller:
                     f"Current Pulse: {cur_pulse_count}\nExpected: {expected_pulse_count}"
                 )
                 time.sleep(0.25)
+                continue
 
-            # else:
-            #     expected_pulse_count = 0
-            #     self.motors_edge_counter.reset_tally()
-            #     self.is_agv_busy = False
-            #     print("DONE")
-            #     return
+            expected_pulse_count = 0
+            self.motors_edge_counter.reset_tally()
+            self.is_agv_busy = False
+            print("DONE")
+            return
 
     def emergency_stop(self):
         # stop everything, then clear instruction list.
