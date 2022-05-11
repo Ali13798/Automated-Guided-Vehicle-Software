@@ -43,10 +43,10 @@ class Controller:
         TOGGLE_RIGHT_MOTOR = Pin.right_motor_kill_switch.value
 
         try:
-            self.backward_directions = [
-                gpiozero.OutputDevice(pin=LDBW_BCM, active_high=False),
-                gpiozero.OutputDevice(pin=RDBW_BCM),
-            ]
+            ld = gpiozero.OutputDevice(pin=LDBW_BCM, active_high=False)
+            rd = gpiozero.OutputDevice(pin=RDBW_BCM)
+
+            self.backward_directions = [ld, rd]
             self.right_motor_kill_switch = gpiozero.OutputDevice(
                 pin=TOGGLE_RIGHT_MOTOR
             )
@@ -62,12 +62,16 @@ class Controller:
         self.motors_edge_counter = self.pi.callback(
             user_gpio=self.MOTORS_GPIO_BCM
         )
-        time.sleep(1)
 
         message_handler = threading.Thread(target=self.shared_list_handler)
         inst_handler = threading.Thread(target=self.instruction_handler)
         message_handler.start()
         inst_handler.start()
+
+        inst = Instruction(command=AgvCommand.forward, value=10)
+        # self.execute_instruction(inst)
+        time.sleep(2)
+        print(self.motors_edge_counter.tally())
 
     def shared_list_handler(self):
         while self.server.connected:
@@ -168,10 +172,6 @@ class Controller:
             inst = self.instructions.pop(0)
             self.mutex_shared_list.release()
 
-            while self.is_agv_busy and self.server.connected:
-                time.sleep(0.25)
-                continue
-
             self.execute_instruction(inst)
 
     def execute_instruction(self, instruction: Instruction):
@@ -191,11 +191,9 @@ class Controller:
             if command == AgvCommand.forward.value:
                 for dir in self.backward_directions:
                     dir.off()
-                    time.sleep(0.050)
             else:
                 for dir in self.backward_directions:
                     dir.on()
-                    time.sleep(0.050)
 
             self.right_motor_kill_switch.off()
             self.left_motor_kill_switch.off()
@@ -207,6 +205,8 @@ class Controller:
                 motor_pin=self.MOTORS_GPIO_BCM,
                 clear_waves=True,
             )
+            time.sleep(2)
+            print("talley", self.motors_edge_counter.tally())
 
         elif command in [
             AgvCommand.rotate_cw.value,
@@ -216,12 +216,8 @@ class Controller:
                 self.right_motor_kill_switch.on()
                 self.left_motor_kill_switch.off()
             else:
-                self.right_motor_kill_switch.off()
                 self.left_motor_kill_switch.on()
-
-            for dir in self.backward_directions:
-                dir.off()
-                time.sleep(0.050)
+                self.right_motor_kill_switch.off()
 
             dist = AgvTools.calc_arc_length(angle=value)
             ramp_inputs = AgvTools.create_ramp_inputs(inches=dist)
@@ -236,18 +232,15 @@ class Controller:
         elif command == AgvCommand.calibrate_home.value:
             pass
 
-        while self.is_agv_busy and self.server.connected:
+        while self.is_agv_busy:
             cur_pulse_count = self.motors_edge_counter.tally()
             if cur_pulse_count != expected_pulse_count:
-                print(
-                    f"Current Pulse: {cur_pulse_count}\nExpected: {expected_pulse_count}"
-                )
                 time.sleep(0.25)
                 continue
+
             expected_pulse_count = 0
             self.motors_edge_counter.reset_tally()
             self.is_agv_busy = False
-            print("DONE")
             return
 
     def emergency_stop(self):
