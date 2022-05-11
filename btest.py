@@ -56,7 +56,7 @@ class Test:
             pi=pi, ramp=ramp, motor_pin=self.motors_gpio_bcm, clear_waves=True
         )
 
-        input("Press enter to exit the program. Do not exit mid execution.")
+        # input("Press enter to exit the program. Do not exit mid execution.")
         print(
             f"final pulse count is: {self.cb_counter.tally()}\nExpected: {AgvTools.calc_pulse_num_from_dist(inches=dist)}"
         )
@@ -65,6 +65,9 @@ class Test:
 
 def main():
     t = Test()
+    input()
+    print(t.cb_counter.tally())
+    input()
 
 
 if __name__ == "__main__":
