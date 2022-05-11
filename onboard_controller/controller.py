@@ -70,7 +70,7 @@ class Controller:
         inst_handler.start()
 
         inst = Instruction(command=AgvCommand.forward, value=10)
-        self.execute_instruction(inst)
+        # self.execute_instruction(inst)
         time.sleep(2)
         print(self.motors_edge_counter.tally())
 
@@ -186,7 +186,7 @@ class Controller:
             self.execute_instruction(inst)
 
     def execute_instruction(self, instruction: Instruction):
-        self.is_agv_busy = True
+        # self.is_agv_busy = True
 
         command = instruction.command
         value = instruction.value
@@ -218,6 +218,8 @@ class Controller:
                 motor_pin=self.MOTORS_GPIO_BCM,
                 clear_waves=True,
             )
+            time.sleep(2)
+            print("talley", self.motors_edge_counter.tally())
             return
 
         if command in [
