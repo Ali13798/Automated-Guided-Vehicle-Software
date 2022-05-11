@@ -172,7 +172,7 @@ class Controller:
             inst = self.instructions.pop(0)
             self.mutex_shared_list.release()
 
-            while self.is_agv_busy:
+            while self.is_agv_busy and self.server.connected:
                 time.sleep(0.25)
                 continue
 
@@ -234,7 +234,7 @@ class Controller:
         elif command == AgvCommand.calibrate_home.value:
             pass
 
-        while self.is_agv_busy:
+        while self.is_agv_busy and self.server.connected:
             cur_pulse_count = self.motors_edge_counter.tally()
             if cur_pulse_count != expected_pulse_count:
                 time.sleep(0.25)
