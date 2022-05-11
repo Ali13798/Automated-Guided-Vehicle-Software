@@ -14,7 +14,9 @@ left_motor_kill_switch = Pin.left_motor_kill_switch.value
 right_motor_kill_switch = Pin.right_motor_kill_switch.value
 
 # Assignments
-direction_left = gpiozero.OutputDevice(left_direction_gpio_bcm)
+direction_left = gpiozero.OutputDevice(
+    left_direction_gpio_bcm, active_high=False
+)
 direction_right = gpiozero.OutputDevice(right_direction_gpio_bcm)
 kill_right = gpiozero.OutputDevice(right_motor_kill_switch)
 kill_left = gpiozero.OutputDevice(left_motor_kill_switch)
