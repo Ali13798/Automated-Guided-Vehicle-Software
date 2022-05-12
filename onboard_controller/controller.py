@@ -28,6 +28,8 @@ class Controller:
         self.instructions: list[Instruction] = []
         self.valid_commands = [cmd.value for cmd in AgvCommand]
 
+        self.timer_interval = 0.25
+
         # Flags
         self.is_e_stopped = False
         self.is_halted = False
@@ -95,12 +97,12 @@ class Controller:
             if self.is_obstructed:
                 # TODO: implement
                 print("OBSTRUCTION DETECTED")
-            time.sleep(0.25)
+            time.sleep(self.timer_interval)
 
     def shared_list_handler(self):
         while self.server.connected:
             if not len(self.shared_list) > 0:
-                time.sleep(0.25)
+                time.sleep(self.timer_interval)
                 continue
 
             self.mutex_shared_list.acquire()
@@ -191,11 +193,11 @@ class Controller:
     def instruction_handler(self):
         while self.server.connected:
             if not len(self.instructions) > 0:
-                time.sleep(0.25)
+                time.sleep(self.timer_interval)
                 continue
 
             if self.is_halted:
-                time.sleep(0.25)
+                time.sleep(self.timer_interval)
                 continue
 
             self.mutex_shared_list.acquire()
@@ -203,7 +205,7 @@ class Controller:
             self.mutex_shared_list.release()
 
             while self.is_agv_busy and self.server.connected:
-                time.sleep(0.25)
+                time.sleep(self.timer_interval)
                 continue
 
             self.execute_instruction(inst)
@@ -243,7 +245,7 @@ class Controller:
             while self.is_agv_busy and self.server.connected:
                 cur_pulse_count = self.motors_edge_counter.tally()
                 if cur_pulse_count != expected_pulse_count:
-                    time.sleep(0.25)
+                    time.sleep(self.timer_interval)
                     continue
 
                 self.motors_edge_counter.reset_tally()
