@@ -63,6 +63,8 @@ class Controller:
         self.motors_edge_counter = self.pi.callback(
             user_gpio=self.MOTORS_GPIO_BCM
         )
+        self.motors_edge_counter.tally()
+        self.motors_edge_counter.reset_tally()
 
         message_handler = threading.Thread(target=self.shared_list_handler)
         inst_handler = threading.Thread(target=self.instruction_handler)
@@ -212,6 +214,16 @@ class Controller:
                 clear_waves=True,
             )
 
+            while self.is_agv_busy and self.server.connected:
+                cur_pulse_count = self.motors_edge_counter.tally()
+                if cur_pulse_count != expected_pulse_count:
+                    time.sleep(0.25)
+                    continue
+
+                self.motors_edge_counter.reset_tally()
+                self.is_agv_busy = False
+                return
+
         elif command in [
             AgvCommand.rotate_cw.value,
             AgvCommand.rotate_ccw.value,
@@ -237,19 +249,23 @@ class Controller:
                 clear_waves=True,
             )
 
-        elif command == AgvCommand.calibrate_home.value:
-            pass
+            wait_time = 0
+            for ri in ramp_inputs:
+                frequency = ri[0]
+                steps = ri[1]
 
-        while self.is_agv_busy and self.server.connected:
-            cur_pulse_count = self.motors_edge_counter.tally()
-            if cur_pulse_count != expected_pulse_count:
-                time.sleep(0.25)
-                continue
+            wait_time += steps * (1 / frequency)
 
-            expected_pulse_count = 0
+            time.sleep(wait_time)
+
+            self.right_motor_kill_switch.off()
+            self.left_motor_kill_switch.off()
             self.motors_edge_counter.reset_tally()
             self.is_agv_busy = False
             return
+
+        elif command == AgvCommand.calibrate_home.value:
+            pass
 
     def emergency_stop(self):
         # stop everything, then clear instruction list.
