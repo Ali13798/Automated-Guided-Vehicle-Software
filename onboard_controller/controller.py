@@ -1,6 +1,7 @@
 import socket
 import threading
 import time
+from tkinter import HORIZONTAL
 
 import gpiozero
 import pigpio
@@ -32,6 +33,9 @@ class Controller:
         self.is_halted = False
         self.is_agv_busy = False
         self.is_verifying_orientation = False
+        self.is_obstructed = False
+        self.is_left_vos_actuated = False
+        self.is_right_vos_actuated = False
 
         server.start_server(self.shared_list, self.mutex_shared_list)
 
@@ -42,6 +46,10 @@ class Controller:
 
         TOGGLE_LEFT_MOTOR = Pin.left_motor_kill_switch.value
         TOGGLE_RIGHT_MOTOR = Pin.right_motor_kill_switch.value
+
+        HORIZONTAL_OS = Pin.horizontal_os.value
+        RIGHT_VERTICAL_OS = Pin.right_vertical_os.value
+        LEFT_VERTICAL_OS = Pin.left_vertical_os.value
 
         try:
             self.backward_directions = [
@@ -54,6 +62,11 @@ class Controller:
             self.left_motor_kill_switch = gpiozero.OutputDevice(
                 pin=TOGGLE_LEFT_MOTOR
             )
+            self.horizontal_os = gpiozero.InputDevice(pin=HORIZONTAL_OS)
+            self.vertical_right_os = gpiozero.InputDevice(
+                pin=RIGHT_VERTICAL_OS
+            )
+            self.vertical_left_os = gpiozero.InputDevice(pin=LEFT_VERTICAL_OS)
         except gpiozero.exc.BadPinFactory:
             print("GPIOZERO Bad Pin Factory.")
 
@@ -68,8 +81,21 @@ class Controller:
 
         message_handler = threading.Thread(target=self.shared_list_handler)
         inst_handler = threading.Thread(target=self.instruction_handler)
+        flag_handler = threading.Thread(target=self.flag_handler)
         message_handler.start()
         inst_handler.start()
+        flag_handler.start()
+
+    def flag_handler(self):
+        while self.server.connected:
+            self.is_obstructed = self.horizontal_os.value == 1
+            self.is_left_vos_actuated = self.vertical_left_os.value == 1
+            self.is_right_vos_actuated = self.vertical_right_os.value == 1
+
+            if self.is_obstructed:
+                # TODO: implement
+                print("OBSTRUCTION DETECTED")
+            time.sleep(0.25)
 
     def shared_list_handler(self):
         while self.server.connected:
