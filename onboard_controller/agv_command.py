@@ -7,6 +7,7 @@ class AgvCommand(Enum):
     e_stop = "!ESTOP"
     set_mode = "!SETMODE"
     halt = "!HALT"
+    traverse_route = "!TRAVERSE"
 
     forward = "FORWARD"
     backward = "BACKWARD"

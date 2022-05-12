@@ -31,6 +31,7 @@ class Controller:
         self.is_e_stopped = False
         self.is_halted = False
         self.is_agv_busy = False
+        self.is_verifying_orientation = False
 
         server.start_server(self.shared_list, self.mutex_shared_list)
 
@@ -123,6 +124,12 @@ class Controller:
             em = "[HALT] Removing AGV Halt..."
             self.server.send_message(em)
             self.is_halted = False
+
+        if msg[0] == AgvCommand.traverse_route.value:
+            if not self.mode == Mode.Production:
+                em = "[INVALID COMMAND] AGV must be in production mode."
+                self.server.send_message(em)
+                return
 
         if len(msg) != 2:
             em = f"[INVALID COMMAND] Expected 2 words, but got {len(msg)}."
@@ -253,6 +260,9 @@ class Controller:
         for dir in self.backward_directions:
             dir.off()
         return
+
+    def run_auto(self):
+        pass
 
 
 def main():
