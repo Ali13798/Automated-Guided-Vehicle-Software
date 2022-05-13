@@ -4,6 +4,7 @@ import pigpio
 
 # unit: inch
 WHEEL_DIAM = 5
+TURN_RADIUS = 16
 
 # steps per revolution
 STEP_DRIVER_STEPS_PER_REV = 3200
@@ -42,7 +43,7 @@ class AgvTools:
 
     def calc_arc_length(angle: int) -> float:
         rad = angle / 180 * math.pi
-        arc_length = WHEEL_DIAM / 2 * rad
+        arc_length = TURN_RADIUS * rad
         return arc_length
 
     def create_ramp_inputs(
