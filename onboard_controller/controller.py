@@ -273,13 +273,14 @@ class Controller:
                     self.execute_instruction(inst, remaining_pulses)
                     break
 
-                if cur_pulse_count != expected_pulse_count:
+                if abs(expected_pulse_count - cur_pulse_count) > 11:
                     time.sleep(self.timer_interval)
                     continue
+                break
 
-                self.motors_edge_counter.reset_tally()
-                self.is_agv_busy = False
-                return
+            self.motors_edge_counter.reset_tally()
+            self.is_agv_busy = False
+            return
 
         elif command in [
             AgvCommand.rotate_cw.value,
