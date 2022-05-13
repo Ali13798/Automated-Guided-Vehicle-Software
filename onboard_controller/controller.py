@@ -1,7 +1,6 @@
 import socket
 import threading
 import time
-from tkinter import HORIZONTAL
 
 import gpiozero
 import pigpio
@@ -92,14 +91,14 @@ class Controller:
 
     def flag_handler(self):
         while self.server.connected:
-            self.is_obstructed = self.horizontal_os.value == 1
+            self.is_obstructed = (
+                self.horizontal_os.value == 1
+                or self.is_halted
+                or self.is_e_stopped
+            )
             self.is_left_vos_actuated = self.vertical_left_os.value == 1
             self.is_right_vos_actuated = self.vertical_right_os.value == 1
 
-            if self.is_obstructed:
-                # TODO: implement
-                # print("OBSTRUCTION DETECTED")
-                pass
             time.sleep(self.timer_interval)
 
     def shared_list_handler(self):
@@ -123,7 +122,7 @@ class Controller:
         self.instructions.append(inst)
         self.mutex_instruction.release()
 
-        self.server.send_message(str(self.instructions))
+        # self.server.send_message(str(self.instructions))
 
     def consume_instruction(self) -> Instruction:
         self.mutex_instruction.acquire()
@@ -140,12 +139,13 @@ class Controller:
             if not self.is_e_stopped:
                 em = "[EMERGENCY STOP] E-Stopping AGV..."
                 self.server.send_message(em)
-                self.emergency_stop()
+                self.is_e_stopped = True
                 return
 
             em = "[EMERGENCY STOP] Removing E-Stop..."
             self.server.send_message(em)
             self.is_e_stopped = False
+            return
 
         if msg[0] == AgvCommand.halt.value:
             if not self.is_halted:
@@ -157,6 +157,7 @@ class Controller:
             em = "[HALT] Removing AGV Halt..."
             self.server.send_message(em)
             self.is_halted = False
+            return
 
         if msg[0] == AgvCommand.traverse_route.value:
             if not self.mode == Mode.Production:
@@ -211,6 +212,10 @@ class Controller:
                 time.sleep(self.timer_interval)
                 continue
 
+            while self.is_e_stopped:
+                time.sleep(self.timer_interval)
+                continue
+
             self.execute_instruction(inst)
 
     def execute_instruction(
@@ -259,12 +264,12 @@ class Controller:
 
             while self.is_agv_busy and self.server.connected:
                 cur_pulse_count = self.motors_edge_counter.tally()
-                if self.is_obstructed:
+                if self.is_obstructed or self.is_e_stopped:
                     self.emergency_stop()
                     self.motors_edge_counter.reset_tally()
                     remaining_pulses = expected_pulse_count - cur_pulse_count
 
-                    while self.is_obstructed:
+                    while self.is_obstructed or self.is_e_stopped:
                         time.sleep(self.timer_interval)
                         continue
 
@@ -272,8 +277,9 @@ class Controller:
 
                     self.execute_instruction(inst, remaining_pulses)
                     break
-
-                if abs(expected_pulse_count - cur_pulse_count) > 11:
+                diff = abs(expected_pulse_count - cur_pulse_count)
+                if diff > 11:
+                    print(diff)
                     time.sleep(self.timer_interval)
                     continue
                 break
