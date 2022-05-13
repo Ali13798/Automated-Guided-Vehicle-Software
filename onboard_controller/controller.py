@@ -1,7 +1,6 @@
 import socket
 import threading
 import time
-from tkinter import HORIZONTAL
 
 import gpiozero
 import pigpio
@@ -38,6 +37,7 @@ class Controller:
         self.is_obstructed = False
         self.is_left_vos_actuated = False
         self.is_right_vos_actuated = False
+        self.is_flagged = False
 
         server.start_server(self.shared_list, self.mutex_shared_list)
 
@@ -204,19 +204,29 @@ class Controller:
             inst = self.instructions.pop(0)
             self.mutex_shared_list.release()
 
-            while self.is_agv_busy and self.server.connected:
+            while (
+                self.is_agv_busy
+                and self.server.connected
+                and not self.is_halted
+            ):
                 time.sleep(self.timer_interval)
                 continue
 
             self.execute_instruction(inst)
 
-    def execute_instruction(self, instruction: Instruction):
+    def execute_instruction(
+        self, instruction: Instruction, remain_pulse: int = -1
+    ):
         self.is_agv_busy = True
 
         command = instruction.command
         value = instruction.value
 
-        expected_pulse_count = AgvTools.calc_pulse_num_from_dist(inches=value)
+        expected_pulse_count = (
+            AgvTools.calc_pulse_num_from_dist(inches=value)
+            if remain_pulse == -1
+            else remain_pulse
+        )
 
         if command in [
             AgvCommand.forward.value,
@@ -225,16 +235,20 @@ class Controller:
             if command == AgvCommand.forward.value:
                 for dir in self.backward_directions:
                     dir.off()
-                    time.sleep(0.050)
             else:
                 for dir in self.backward_directions:
                     dir.on()
-                    time.sleep(0.050)
 
             self.right_motor_kill_switch.off()
             self.left_motor_kill_switch.off()
 
-            ramp_inputs = AgvTools.create_ramp_inputs(inches=value)
+            ramp_inputs = (
+                AgvTools.create_ramp_inputs(inches=value)
+                if remain_pulse == -1
+                else AgvTools.create_ramp_inputs(
+                    inches=0, remain_pulse=remain_pulse
+                )
+            )
             AgvTools.generate_ramp(
                 pi=self.pi,
                 ramp=ramp_inputs,
@@ -244,13 +258,42 @@ class Controller:
 
             while self.is_agv_busy and self.server.connected:
                 cur_pulse_count = self.motors_edge_counter.tally()
+                if self.is_obstructed:
+                    self.emergency_stop()
+                    self.motors_edge_counter.reset_tally()
+                    remaining_pulses = expected_pulse_count - cur_pulse_count
+
+                    while self.is_obstructed:
+                        time.sleep(self.timer_interval)
+                        continue
+
+                    inst = Instruction(command=command, value=0)
+
+                    self.execute_instruction(inst, remaining_pulses)
+                    break
+
+                # if self.is_obstructed and self.was_obstructed:
+                #     self.was_obstructed = True
+                #     self.emergency_stop()
+                #     self.motors_edge_counter.reset_tally()
+                #     remaining_pulses = expected_pulse_count - cur_pulse_count
+                #     inst = Instruction(command=command, value=0)
+
+                #     while self.is_obstructed:
+                #         time.sleep(self.timer_interval)
+                #         continue
+
+                #     self.execute_instruction(inst, remaining_pulses)
+                #     self.was_obstructed = False
+                #     break
+
                 if cur_pulse_count != expected_pulse_count:
                     time.sleep(self.timer_interval)
                     continue
 
-                self.motors_edge_counter.reset_tally()
-                self.is_agv_busy = False
-                return
+            self.motors_edge_counter.reset_tally()
+            self.is_agv_busy = False
+            return
 
         elif command in [
             AgvCommand.rotate_cw.value,
@@ -284,7 +327,7 @@ class Controller:
 
             wait_time += steps * (1 / frequency)
 
-            time.sleep(wait_time)
+            time.sleep(wait_time + 0.010)
 
             self.right_motor_kill_switch.off()
             self.left_motor_kill_switch.off()
