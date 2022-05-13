@@ -45,7 +45,9 @@ class AgvTools:
         arc_length = WHEEL_DIAM / 2 * rad
         return arc_length
 
-    def create_ramp_inputs(inches: float) -> list[list[int, int]]:
+    def create_ramp_inputs(
+        inches: float, remain_pulse: int = -1
+    ) -> list[list[int, int]]:
         """Generates the acceleration and deceleration frequencies.
 
         Args:
@@ -60,7 +62,11 @@ class AgvTools:
         freq_levels = [2000]  # for testing
         steps_per_freq_level = 100
 
-        pulse_num = AgvTools.calc_pulse_num_from_dist(inches=inches)
+        pulse_num = (
+            AgvTools.calc_pulse_num_from_dist(inches=inches)
+            if remain_pulse == -1
+            else remain_pulse
+        )
 
         freq_level_index = pulse_num // (steps_per_freq_level * 2)
 

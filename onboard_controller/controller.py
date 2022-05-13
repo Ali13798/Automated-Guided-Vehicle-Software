@@ -210,13 +210,19 @@ class Controller:
 
             self.execute_instruction(inst)
 
-    def execute_instruction(self, instruction: Instruction):
+    def execute_instruction(
+        self, instruction: Instruction, remain_pulse: int = -1
+    ):
         self.is_agv_busy = True
 
         command = instruction.command
         value = instruction.value
 
-        expected_pulse_count = AgvTools.calc_pulse_num_from_dist(inches=value)
+        expected_pulse_count = (
+            AgvTools.calc_pulse_num_from_dist(inches=value)
+            if remain_pulse == -1
+            else remain_pulse
+        )
 
         if command in [
             AgvCommand.forward.value,
@@ -234,7 +240,13 @@ class Controller:
             self.right_motor_kill_switch.off()
             self.left_motor_kill_switch.off()
 
-            ramp_inputs = AgvTools.create_ramp_inputs(inches=value)
+            ramp_inputs = (
+                AgvTools.create_ramp_inputs(inches=value)
+                if remain_pulse == -1
+                else AgvTools.create_ramp_inputs(
+                    inches=0, remain_pulse=remain_pulse
+                )
+            )
             AgvTools.generate_ramp(
                 pi=self.pi,
                 ramp=ramp_inputs,
