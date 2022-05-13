@@ -92,9 +92,7 @@ class Controller:
     def flag_handler(self):
         while self.server.connected:
             self.is_obstructed = (
-                self.horizontal_os.value == 1
-                or self.is_halted
-                or self.is_e_stopped
+                self.horizontal_os.value == 1 or self.is_halted
             )
             self.is_left_vos_actuated = self.vertical_left_os.value == 1
             self.is_right_vos_actuated = self.vertical_right_os.value == 1
@@ -333,7 +331,6 @@ class Controller:
 
     def emergency_stop(self):
         # stop everything, then clear instruction list.
-        self.is_e_stopped = True
         AgvTools.wave_clear(pi=self.pi, motor=self.MOTORS_GPIO_BCM)
         self.left_motor_kill_switch.off()
         self.right_motor_kill_switch.off()
