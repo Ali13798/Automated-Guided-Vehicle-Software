@@ -75,6 +75,8 @@ class Controller:
         # Note: must first run "sudo pigpiod -t 0 -s 4" in pi terminal. \
         # The -s 4 option selects sample rate of 4 (rows of the freq table)
         self.pi = pigpio.pi()
+        self.pi.set_mode(self.MOTORS_GPIO_BCM, pigpio.OUTPUT)
+        self.pi.set_pull_up_down(self.MOTORS_GPIO_BCM, pigpio.PUD_UP)
         self.motors_edge_counter = self.pi.callback(
             user_gpio=self.MOTORS_GPIO_BCM
         )
@@ -96,7 +98,8 @@ class Controller:
 
             if self.is_obstructed:
                 # TODO: implement
-                print("OBSTRUCTION DETECTED")
+                # print("OBSTRUCTION DETECTED")
+                pass
             time.sleep(self.timer_interval)
 
     def shared_list_handler(self):
@@ -256,6 +259,20 @@ class Controller:
 
             while self.is_agv_busy and self.server.connected:
                 cur_pulse_count = self.motors_edge_counter.tally()
+                if self.is_obstructed:
+                    self.emergency_stop()
+                    self.motors_edge_counter.reset_tally()
+                    remaining_pulses = expected_pulse_count - cur_pulse_count
+
+                    while self.is_obstructed:
+                        time.sleep(self.timer_interval)
+                        continue
+
+                    inst = Instruction(command=command, value=0)
+
+                    self.execute_instruction(inst, remaining_pulses)
+                    break
+
                 if cur_pulse_count != expected_pulse_count:
                     time.sleep(self.timer_interval)
                     continue
@@ -310,7 +327,7 @@ class Controller:
     def emergency_stop(self):
         # stop everything, then clear instruction list.
         self.is_e_stopped = True
-        self.pi.wave_clear()
+        AgvTools.wave_clear(pi=self.pi, motor=self.MOTORS_GPIO_BCM)
         self.left_motor_kill_switch.off()
         self.right_motor_kill_switch.off()
         for dir in self.backward_directions:

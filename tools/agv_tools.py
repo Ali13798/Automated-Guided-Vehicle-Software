@@ -1,6 +1,7 @@
 import math
 
 import pigpio
+from onboard_controller.pi_bcm_pin_assignment import Pin
 
 # unit: inch
 WHEEL_DIAM = 5
@@ -127,6 +128,20 @@ class AgvTools:
             chain += [255, 0, wid[i], 255, 1, x, y]
 
         pi.wave_chain(chain)  # Transmit chain.
+
+    def wave_clear(pi: pigpio.pi, motor: Pin.motors.value):
+        f = 2000
+        micros = int(500000 / f)
+        wf = []
+        wf.append(pigpio.pulse(1 << motor, 0, micros))  # pulse on
+        wf.append(pigpio.pulse(0, 1 << motor, micros))  # pulse off
+        pi.wave_add_generic(wf)
+        wid = pi.wave_create()
+        s = 1
+        x = s & 255
+        y = s >> 8
+        chain = [255, 0, wid, 255, 1, x, y]
+        pi.wave_chain(chain)
 
 
 def main():
