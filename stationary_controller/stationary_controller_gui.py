@@ -46,6 +46,10 @@ class GUI(ttk.Frame):
         # self.mode = Mode.Teach
         # self.mode = Mode.Production
 
+        # Flags
+        self.is_e_stopped = False
+        self.is_halted = False
+
         # Create Paness
         self.create_panes()
 
@@ -607,6 +611,7 @@ class GUI(ttk.Frame):
         self.btn_halt = ttk.Button(
             self.teach_pane,
             text="Halt",
+            style="halt.TButton",
             command=self.halt,
         )
         self.btn_emergency_stop = ttk.Button(
@@ -707,9 +712,39 @@ class GUI(ttk.Frame):
 
     def halt(self):
         self.client.send_message(AgvCommand.halt.value)
+        if not self.is_halted:
+            self.style.configure(
+                "halt.TButton",
+                background="red",
+                foreground="white",
+            )
+            self.is_halted = True
+            return
+
+        self.style.configure(
+            "halt.TButton",
+            background="#fcc200",
+            foreground="black",
+        )
+        self.is_halted = False
 
     def emergency_stop(self):
         self.client.send_message(AgvCommand.e_stop.value)
+        if not self.is_e_stopped:
+            self.style.configure(
+                "estop.TButton",
+                background="red",
+                foreground="white",
+            )
+            self.is_e_stopped = True
+            return
+
+        self.style.configure(
+            "estop.TButton",
+            background="#fcc200",
+            foreground="black",
+        )
+        self.is_e_stopped = False
 
     def on_click_txt_station_name(self, event):
         self.txt_var_station_name.set("")
