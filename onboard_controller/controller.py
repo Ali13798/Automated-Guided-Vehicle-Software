@@ -277,7 +277,6 @@ class Controller:
                     break
                 diff = abs(expected_pulse_count - cur_pulse_count)
                 if diff > 11:
-                    print(diff)
                     time.sleep(self.timer_interval)
                     continue
                 break
