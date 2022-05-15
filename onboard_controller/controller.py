@@ -193,6 +193,7 @@ class Controller:
         return inst
 
     def instruction_handler(self):
+        was_e_stopped = False
         while self.server.connected:
             if not len(self.instructions) > 0:
                 time.sleep(self.timer_interval)
@@ -203,7 +204,11 @@ class Controller:
                 continue
 
             self.mutex_shared_list.acquire()
-            inst = self.instructions.pop(0)
+            if self.is_e_stopped:
+                self.instructions = []
+                was_e_stopped = True
+            else:
+                inst = self.instructions.pop(0)
             self.mutex_shared_list.release()
 
             while self.is_agv_busy and self.server.connected:
@@ -212,6 +217,10 @@ class Controller:
 
             while self.is_e_stopped:
                 time.sleep(self.timer_interval)
+                continue
+
+            if was_e_stopped:
+                was_e_stopped = False
                 continue
 
             self.execute_instruction(inst)
@@ -262,9 +271,12 @@ class Controller:
 
             while self.is_agv_busy and self.server.connected:
                 cur_pulse_count = self.motors_edge_counter.tally()
-                if self.is_obstructed or self.is_e_stopped:
+                if self.is_e_stopped:
                     self.emergency_stop()
-                    self.motors_edge_counter.reset_tally()
+                    break
+
+                elif self.is_obstructed:
+                    self.emergency_stop()
                     remaining_pulses = expected_pulse_count - cur_pulse_count
 
                     while self.is_obstructed or self.is_e_stopped:
@@ -275,8 +287,9 @@ class Controller:
 
                     self.execute_instruction(inst, remaining_pulses)
                     break
+
                 diff = abs(expected_pulse_count - cur_pulse_count)
-                if diff > 11:
+                if not self.is_e_stopped and diff > 11:
                     time.sleep(self.timer_interval)
                     continue
                 break
@@ -315,9 +328,9 @@ class Controller:
                 frequency = ri[0]
                 steps = ri[1]
 
-            wait_time += steps * (1 / frequency)
+                wait_time += steps * (1 / frequency)
 
-            time.sleep(wait_time)
+            time.sleep(wait_time + 0.050)
 
             self.right_motor_kill_switch.off()
             self.left_motor_kill_switch.off()
@@ -331,6 +344,7 @@ class Controller:
     def emergency_stop(self):
         # stop everything, then clear instruction list.
         AgvTools.wave_clear(pi=self.pi, motor=self.MOTORS_GPIO_BCM)
+        self.motors_edge_counter.reset_tally()
         self.left_motor_kill_switch.off()
         self.right_motor_kill_switch.off()
         for dir in self.backward_directions:
