@@ -264,9 +264,13 @@ class Controller:
             self.execute_instruction(inst)
 
     def execute_instruction(
-        self, instruction: Instruction, remain_pulse: int = -1
+        self,
+        instruction: Instruction,
+        remain_pulse: int = -1,
+        is_orienting=False,
     ):
-        self.is_agv_busy = True
+        if not is_orienting:
+            self.is_agv_busy = True
 
         command = instruction.command
         value = instruction.value
@@ -313,8 +317,12 @@ class Controller:
                     self.emergency_stop()
                     break
 
-                elif self.is_userful_qr_code_scanned:
+                elif self.is_userful_qr_code_scanned and not is_orienting:
+                    remaining_pulses = expected_pulse_count - cur_pulse_count
                     self.emergency_stop()
+                    self.simple_search()
+                    inst = Instruction(command=command, value=0)
+                    self.execute_instruction(inst, remaining_pulses)
                     break
 
                 elif self.is_obstructed:
@@ -336,8 +344,10 @@ class Controller:
                     continue
                 break
 
+            if not is_orienting:
+                self.is_agv_busy = False
+
             self.motors_edge_counter.reset_tally()
-            self.is_agv_busy = False
             return
 
         elif command in [
@@ -377,7 +387,8 @@ class Controller:
             self.right_motor_kill_switch.off()
             self.left_motor_kill_switch.off()
             self.motors_edge_counter.reset_tally()
-            self.is_agv_busy = False
+            if not is_orienting:
+                self.is_agv_busy = False
             return
 
         elif command == AgvCommand.calibrate_home.value:
@@ -414,6 +425,30 @@ class Controller:
         cap.release()
         cv2.destroyAllWindows()
         return text
+
+    def simple_search(self):
+        if (
+            self.is_userful_qr_code_scanned
+            and not self.is_left_vos_actuated
+            and not self.is_right_vos_actuated
+        ):
+            while True:
+                special_angle = 52
+                inc = 4
+                inst = Instruction(
+                    command=AgvCommand.backward.value,
+                    value=1,
+                )
+                self.execute_instruction(instruction=inst, is_orienting=True)
+                inst = Instruction(
+                    command=AgvCommand.rotate_ccw.value, value=special_angle
+                )
+
+                if self.is_left_vos_actuated:
+                    pass
+        else:
+            # complicated method
+            pass
 
 
 def main():
