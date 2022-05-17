@@ -7,7 +7,9 @@ import math
 import socket
 import threading
 import time
+import webbrowser
 
+import cv2
 import gpiozero
 import pigpio
 from stationary_controller.mode import Mode
@@ -43,6 +45,7 @@ class Controller:
         self.is_obstructed = False
         self.is_left_vos_actuated = False
         self.is_right_vos_actuated = False
+        self.is_userful_qr_code_scanned = False
 
         server.start_server(self.shared_list, self.mutex_shared_list)
 
@@ -102,6 +105,11 @@ class Controller:
             )
             self.is_left_vos_actuated = self.vertical_left_os.value == 1
             self.is_right_vos_actuated = self.vertical_right_os.value == 1
+
+            qr_text = self.get_string_from_qr_code()
+            if qr_text:
+                # it exists, check to see if it is important?
+                pass
 
             time.sleep(self.timer_interval)
 
@@ -339,6 +347,9 @@ class Controller:
                     self.emergency_stop()
                     break
 
+                elif self.is_userful_qr_code_scanned:
+                    pass
+
                 elif self.is_obstructed:
                     self.emergency_stop()
                     remaining_pulses = expected_pulse_count - cur_pulse_count
@@ -417,6 +428,25 @@ class Controller:
 
     def run_auto(self):
         pass
+
+    def get_string_from_qr_code(self):
+        cap = cv2.VideoCapture(0)
+        cap.set(3, 640)  # Set horizontal resolution
+        cap.set(4, 640)  # Set vertical resolution
+        # initialize the cv2 QRCode detector
+        detector = cv2.QRCodeDetector()
+        while True:
+            _, img = cap.read()
+            data, bbox, _ = detector.detectAndDecode(img)
+            if data:
+                a = data
+                break
+            if cv2.waitKey(1) == ord("q"):
+                break
+        text = str(a)
+        cap.release()
+        cv2.destroyAllWindows()
+        return text
 
 
 def main():
