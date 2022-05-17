@@ -36,6 +36,7 @@ class Controller:
         self.valid_commands = [cmd.value for cmd in AgvCommand]
 
         self.timer_interval = 0.25
+        self.destinations_list: list[str] = []
 
         # Flags
         self.is_e_stopped = False
@@ -107,9 +108,24 @@ class Controller:
             self.is_right_vos_actuated = self.vertical_right_os.value == 1
 
             qr_text = self.get_string_from_qr_code()
-            if qr_text:
-                # it exists, check to see if it is important?
-                pass
+            if not qr_text:
+                time.sleep(self.timer_interval)
+                continue
+
+            print(qr_text)
+
+            # lst = qr_text.split()
+            # start_name = lst[1]
+            # end_names = lst[3:]
+
+            # if (
+            #     self.start_station_name != start_name
+            #     or self.end_station_name not in end_names
+            # ):
+            #     time.sleep(self.timer_interval)
+            #     continue
+
+            # self.is_userful_qr_code_scanned = True
 
             time.sleep(self.timer_interval)
 
@@ -177,63 +193,13 @@ class Controller:
                 self.server.send_message(em)
                 return
 
-            # filename = msg[1]
-            # with open(filename, "r") as file:
-            #     lines = file.readlines()
+        if msg[0] == "STARTNAME":
+            self.start_station_name = msg[1]
+            return
 
-            # lines = [l.strip().split(" ") for l in lines]
-            # lines = lines[1:]
-
-            # inst_list: list[Instruction] = []
-
-            # for i, line in enumerate(lines):
-            #     if i == 0:
-            #         continue
-
-            #     last_line = lines[i - 1]
-            #     delta_x = float(line[0]) - float(last_line[0])
-            #     delta_y = float(line[1]) - float(last_line[1])
-            #     delta_angle = float(line[2]) - float(last_line[2])
-
-            #     if delta_angle:
-            #         cmd = (
-            #             AgvCommand.rotate_cw
-            #             if delta_angle < 0
-            #             else AgvCommand.rotate_ccw
-            #         )
-            #         inst_list.append(
-            #             Instruction(command=cmd, value=abs(delta_angle))
-            #         )
-
-            #     dist = math.sqrt(delta_x * delta_x + delta_y * delta_y)
-            #     if (delta_x < 0 and delta_y < 0) or (
-            #         delta_x < 0 and delta_y < 0
-            #     ):
-            #         if 0 <= line[2] <= 180:
-            #             cmd = AgvCommand.backward
-            #         else:
-            #             cmd = AgvCommand.forward
-
-            # if delta_angle == 0:
-            #     if delta_x < 0 or delta_y < 0:
-            #         cmd = AgvCommand.backward
-            #     else:
-            #         cmd = AgvCommand.forward
-
-            #     value = delta_x if not delta_y else delta_y
-            #     inst = Instruction(command=cmd, value=value)
-            #     inst_list.append(inst)
-
-            # elif delta_angle < 0:
-            #     cmd = AgvCommand.rotate_cw
-            # else:
-            #     cmd = AgvCommand.rotate_ccw
-
-            # inst = Instruction(command=cmd, value=delta_angle)
-            # inst_list.append(inst)
-
-            # print(inst_list)
-            # return
+        if msg[0] == "ENDNAME":
+            self.end_station_name = msg[1]
+            return
 
         if len(msg) != 2:
             em = f"[INVALID COMMAND] Expected 2 words, but got {len(msg)}."
@@ -348,7 +314,8 @@ class Controller:
                     break
 
                 elif self.is_userful_qr_code_scanned:
-                    pass
+                    self.emergency_stop()
+                    break
 
                 elif self.is_obstructed:
                     self.emergency_stop()

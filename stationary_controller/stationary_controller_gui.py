@@ -368,6 +368,9 @@ class GUI(ttk.Frame):
         file_name = f"{starting_name}_to_{destination_name}_coord.txt"
         self.route_name = f"{starting_name}_to_{destination_name}.txt"
 
+        self.client.send_message(f"STARTNAME {starting_name}")
+        self.client.send_message(f"ENDNAME {destination_name}")
+
         files: list[str] = self.get_route_files()
         if file_name not in files:
             print("Selected route not found in the saved routes.")
@@ -424,17 +427,12 @@ class GUI(ttk.Frame):
             inst_list = [inst.strip().split() for inst in inst_list]
             self.inst_list = []
             for inst in inst_list:
-                # print("******NOW*****")
-                # print(inst[0], type(inst[0]))
-                cmd = AgvCommand(inst[0])
+                cmd = AgvCommand(inst[0].value)
                 value = float(inst[1])
 
-                self.inst_list.append(Instruction(cmd.value, value))
+                self.inst_list.append(Instruction(cmd, value))
                 msg = f"{cmd.value} {value}"
                 self.client.send_message(msg)
-
-            # msg = f"{AgvCommand.traverse_route.value} {file_path}"
-            # self.client.send_message(msg)
 
         self.traverse_waypoints(waypoints=waypoints, set_waypoints=True)
         print(
