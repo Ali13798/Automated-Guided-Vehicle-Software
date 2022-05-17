@@ -1,3 +1,8 @@
+"""
+File:       setup.py
+Author:     Ali Karimiafshar
+"""
+
 from setuptools import find_packages, setup
 
 setup(

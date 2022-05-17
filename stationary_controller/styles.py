@@ -1,3 +1,9 @@
+"""
+File:       stationary_controller/styles.py
+Author:     Ali Karimiafshar
+"""
+
+
 class AgvStyles:
     """Includes the style specifications of the AGV COntrol GUI"""
 

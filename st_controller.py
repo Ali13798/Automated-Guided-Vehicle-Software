@@ -1,3 +1,8 @@
+"""
+File:       st_controller.py
+Author:     Ali Karimiafshar
+"""
+
 from stationary_controller.stationary_controller_gui import GUI
 from tools.agv_socket import AgvSocket
 

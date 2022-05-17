@@ -1,3 +1,8 @@
+"""
+File:       onboard_controller/controller.py
+Author:     Ali Karimiafshar
+"""
+
 import math
 import socket
 import threading

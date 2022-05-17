@@ -1,3 +1,8 @@
+"""
+File:       onboard_controller/pi_bcm_pin_assignment.py
+Author:     Ali Karimiafshar
+"""
+
 from enum import Enum
 
 
@@ -10,3 +15,4 @@ class Pin(Enum):
     horizontal_os = 16
     left_vertical_os = 20
     right_vertical_os = 21
+    rear_horizontal_os_power = 24

@@ -42,7 +42,7 @@ kill_right.off()
 kill_left.off()
 
 # distance in inches to travel or arc length of turn
-dist = 100
+dist = 1
 ramp = AgvTools.create_ramp_inputs(inches=dist)
 print(ramp)
 

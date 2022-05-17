@@ -1,3 +1,8 @@
+"""
+File:       stationary_controller/stationary_controller_gui.py
+Author:     Ali Karimiafshar
+"""
+
 import os
 import socket
 import sys
@@ -17,8 +22,8 @@ from stationary_controller.styles import AgvStyles
 from stationary_controller.waypoint import Waypoint
 
 # Global Constants
-SERVER_IP = socket.gethostbyname(socket.gethostname() + ".local")
 SERVER_IP = "192.168.0.160"
+SERVER_IP = socket.gethostbyname(socket.gethostname() + ".local")
 SERVER_PORT = 1234
 
 

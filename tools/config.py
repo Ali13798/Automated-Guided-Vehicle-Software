@@ -1,3 +1,8 @@
+"""
+File:       tools/config.py
+Author:     Ali Karimiafshar
+"""
+
 import json
 from dataclasses import dataclass
 

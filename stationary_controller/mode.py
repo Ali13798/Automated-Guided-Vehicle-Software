@@ -1,3 +1,8 @@
+"""
+File:       stationary_controller/mode.py
+Author:     Ali Karimiafshar
+"""
+
 from enum import Enum, auto
 
 
