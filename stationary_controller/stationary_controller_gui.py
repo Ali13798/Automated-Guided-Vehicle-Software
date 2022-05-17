@@ -15,6 +15,7 @@ from tkinter import ttk
 
 import numpy as np
 from onboard_controller.agv_command import AgvCommand
+from onboard_controller.instructions import Instruction
 from tools.agv_socket import AgvSocket
 
 from stationary_controller.mode import Mode
@@ -22,8 +23,8 @@ from stationary_controller.styles import AgvStyles
 from stationary_controller.waypoint import Waypoint
 
 # Global Constants
-SERVER_IP = "192.168.0.160"
 SERVER_IP = socket.gethostbyname(socket.gethostname() + ".local")
+SERVER_IP = "192.168.0.160"
 SERVER_PORT = 1234
 
 
@@ -68,6 +69,7 @@ class GUI(ttk.Frame):
         # Initialize waypoint and station tracking variables
         self.waypoints: list[Waypoint] = []
         self.stations: dict[int, tuple[str, Waypoint]] = {}
+        self.inst_list: list[Instruction] = []
 
         # Thread for Map overlay of current position and orientation data
         th = threading.Thread(target=self.show_metrics_on_canvas, daemon=True)
@@ -363,7 +365,8 @@ class GUI(ttk.Frame):
         waypoints: list[Waypoint] = []
         starting_name = self.dd_var_starting_station.get()
         destination_name = self.dd_var_destination_station.get()
-        file_name = f"{starting_name}_to_{destination_name}.txt"
+        file_name = f"{starting_name}_to_{destination_name}_coord.txt"
+        self.route_name = f"{starting_name}_to_{destination_name}.txt"
 
         files: list[str] = self.get_route_files()
         if file_name not in files:
@@ -413,13 +416,29 @@ class GUI(ttk.Frame):
 
                     self.draw_station(station=wp, name=destination_name)
 
+        with open(file=f"./routes/{self.route_name}", mode="r") as file:
+            file.readline()
+
+            inst_list = file.readlines()
+
+            inst_list = [inst.strip().split() for inst in inst_list]
+            self.inst_list = []
+            for inst in inst_list:
+                # print("******NOW*****")
+                # print(inst[0], type(inst[0]))
+                cmd = AgvCommand(inst[0])
+                value = float(inst[1])
+
+                self.inst_list.append(Instruction(cmd.value, value))
+                msg = f"{cmd.value} {value}"
+                self.client.send_message(msg)
+
             # msg = f"{AgvCommand.traverse_route.value} {file_path}"
             # self.client.send_message(msg)
 
         self.traverse_waypoints(waypoints=waypoints, set_waypoints=True)
         print(
-            f'Route "{starting_name}" to "{destination_name}" \
-                 loaded from file {file_name} successfully.'
+            f'Route "{starting_name}" to "{destination_name}" loaded from file {file_name} successfully.'
         )
 
     def traverse_waypoints(
@@ -451,12 +470,18 @@ class GUI(ttk.Frame):
         dist = self.txt_intensity_value.get()
         self.turtle.forward(dist)
 
+        inst = Instruction(command=AgvCommand.forward.value, value=dist)
+        self.inst_list.append(inst)
+
         text = f"{AgvCommand.forward.value} {dist}"
         self.client.send_message(text)
 
     def move_backward(self, dist: int = 10):
         dist = self.txt_intensity_value.get()
         self.turtle.backward(dist)
+
+        inst = Instruction(command=AgvCommand.backward.value, value=dist)
+        self.inst_list.append(inst)
 
         text = f"{AgvCommand.backward.value} {dist}"
         self.client.send_message(text)
@@ -465,12 +490,18 @@ class GUI(ttk.Frame):
         angle = self.txt_intensity_value.get()
         self.turtle.left(angle)
 
+        inst = Instruction(command=AgvCommand.rotate_ccw.value, value=angle)
+        self.inst_list.append(inst)
+
         text = f"{AgvCommand.rotate_ccw.value} {angle}"
         self.client.send_message(text)
 
     def rotate_right(self, angle: int = 10):
         angle = self.txt_intensity_value.get()
         self.turtle.right(angle)
+
+        inst = Instruction(command=AgvCommand.rotate_cw.value, value=angle)
+        self.inst_list.append(inst)
 
         text = f"{AgvCommand.rotate_cw.value} {angle}"
         self.client.send_message(text)
@@ -507,7 +538,12 @@ class GUI(ttk.Frame):
             )
             return
 
-        file_name = f"{self.stations[0][0]}_to_{self.stations[1][0]}.txt"
+        self.route_name = (
+            f"{self.stations[0][0]}_to_{self.stations[1][0]}.txt"
+        )
+        file_name = (
+            f"{self.stations[0][0]}_to_{self.stations[1][0]}_coord.txt"
+        )
 
         with open(file=f"./routes/{file_name}", mode="w") as file:
             file.write("X Y HEADING\n")
@@ -516,6 +552,11 @@ class GUI(ttk.Frame):
                 y = 0 if (wp.y < 0.001 and wp.y > -0.001) else wp.y
                 line = f"{x:.2f} {y:.2f} {wp.heading:.2f}\n"
                 file.writelines(line)
+
+        with open(file=f"./routes/{self.route_name}", mode="w") as file:
+            file.write("Command Value\n")
+            for inst in self.inst_list:
+                file.write(f"{inst.command} {inst.value}\n")
 
         print(f"Route {file_name[:-4]} successfully saved.")
 
