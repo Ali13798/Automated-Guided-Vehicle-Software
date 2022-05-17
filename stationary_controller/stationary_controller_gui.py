@@ -369,8 +369,10 @@ class GUI(ttk.Frame):
         for _ in range(len(self.stations)):
             self.remove_station()
 
+        file_path = f"./routes/{file_name}"
+
         # Open the file to in read mode
-        with open(file=f"./routes/{file_name}", mode="r") as file:
+        with open(file=file_path, mode="r") as file:
             # Ignore the heading (first line)
             file.readline()
 
@@ -405,6 +407,9 @@ class GUI(ttk.Frame):
                     self.stations[n] = (destination_name, wp)
 
                     self.draw_station(station=wp, name=destination_name)
+
+            # msg = f"{AgvCommand.traverse_route.value} {file_path}"
+            # self.client.send_message(msg)
 
         self.traverse_waypoints(waypoints=waypoints, set_waypoints=True)
         print(
@@ -504,8 +509,8 @@ class GUI(ttk.Frame):
             for wp in self.waypoints:
                 x = 0 if (wp.x < 0.001 and wp.x > -0.001) else wp.x
                 y = 0 if (wp.y < 0.001 and wp.y > -0.001) else wp.y
-                inst = f"{x} {y} {wp.heading}\n"
-                file.writelines(inst)
+                line = f"{x:.2f} {y:.2f} {wp.heading:.2f}\n"
+                file.writelines(line)
 
         print(f"Route {file_name[:-4]} successfully saved.")
 

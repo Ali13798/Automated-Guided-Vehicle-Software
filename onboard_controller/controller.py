@@ -1,3 +1,4 @@
+import math
 import socket
 import threading
 import time
@@ -162,6 +163,64 @@ class Controller:
                 em = "[INVALID COMMAND] AGV must be in production mode."
                 self.server.send_message(em)
                 return
+
+            # filename = msg[1]
+            # with open(filename, "r") as file:
+            #     lines = file.readlines()
+
+            # lines = [l.strip().split(" ") for l in lines]
+            # lines = lines[1:]
+
+            # inst_list: list[Instruction] = []
+
+            # for i, line in enumerate(lines):
+            #     if i == 0:
+            #         continue
+
+            #     last_line = lines[i - 1]
+            #     delta_x = float(line[0]) - float(last_line[0])
+            #     delta_y = float(line[1]) - float(last_line[1])
+            #     delta_angle = float(line[2]) - float(last_line[2])
+
+            #     if delta_angle:
+            #         cmd = (
+            #             AgvCommand.rotate_cw
+            #             if delta_angle < 0
+            #             else AgvCommand.rotate_ccw
+            #         )
+            #         inst_list.append(
+            #             Instruction(command=cmd, value=abs(delta_angle))
+            #         )
+
+            #     dist = math.sqrt(delta_x * delta_x + delta_y * delta_y)
+            #     if (delta_x < 0 and delta_y < 0) or (
+            #         delta_x < 0 and delta_y < 0
+            #     ):
+            #         if 0 <= line[2] <= 180:
+            #             cmd = AgvCommand.backward
+            #         else:
+            #             cmd = AgvCommand.forward
+
+            # if delta_angle == 0:
+            #     if delta_x < 0 or delta_y < 0:
+            #         cmd = AgvCommand.backward
+            #     else:
+            #         cmd = AgvCommand.forward
+
+            #     value = delta_x if not delta_y else delta_y
+            #     inst = Instruction(command=cmd, value=value)
+            #     inst_list.append(inst)
+
+            # elif delta_angle < 0:
+            #     cmd = AgvCommand.rotate_cw
+            # else:
+            #     cmd = AgvCommand.rotate_ccw
+
+            # inst = Instruction(command=cmd, value=delta_angle)
+            # inst_list.append(inst)
+
+            # print(inst_list)
+            # return
 
         if len(msg) != 2:
             em = f"[INVALID COMMAND] Expected 2 words, but got {len(msg)}."
