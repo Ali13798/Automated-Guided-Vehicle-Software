@@ -247,7 +247,7 @@ class Controller:
             return
 
         try:
-            int(msg[1])
+            float(msg[1])
         except ValueError:
             em = f'[INVALID COMMAND] expected a number as second term, but got "{msg[1]}."'
             self.server.send_message(em)
