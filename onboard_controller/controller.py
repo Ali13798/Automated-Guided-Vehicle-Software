@@ -35,7 +35,7 @@ class Controller:
         self.instructions: list[Instruction] = []
         self.valid_commands = [cmd.value for cmd in AgvCommand]
 
-        self.timer_interval = 0.25
+        self.timer_interval = 0.050
         self.destinations_list: list[str] = []
 
         # Flags
@@ -114,19 +114,18 @@ class Controller:
 
             print(qr_text)
 
-            # lst = qr_text.split()
-            # start_name = lst[1]
-            # end_names = lst[3:]
+            lst = qr_text.split()
+            start_name = lst[1]
+            end_names = lst[3:]
 
-            # if (
-            #     self.start_station_name != start_name
-            #     or self.end_station_name not in end_names
-            # ):
-            #     time.sleep(self.timer_interval)
-            #     continue
+            if (
+                self.start_station_name != start_name
+                or self.end_station_name not in end_names
+            ):
+                time.sleep(self.timer_interval)
+                continue
 
-            # self.is_userful_qr_code_scanned = True
-
+            self.is_userful_qr_code_scanned = True
             time.sleep(self.timer_interval)
 
     def shared_list_handler(self):
@@ -320,7 +319,8 @@ class Controller:
                 elif self.is_userful_qr_code_scanned and not is_orienting:
                     remaining_pulses = expected_pulse_count - cur_pulse_count
                     self.emergency_stop()
-                    self.simple_search()
+                    is_found = self.simple_search()
+                    print(is_found)
                     inst = Instruction(command=command, value=0)
                     self.execute_instruction(inst, remaining_pulses)
                     break
@@ -457,14 +457,14 @@ class Controller:
 
                 is_found = self.pivot_helper()
                 if is_found:
-                    return
+                    return is_found
 
             # never found targets.
             temp_inst = Instruction(
                 command=AgvCommand.backward.value, value=search_band_total
             )
             self.execute_instruction(instruction=temp_inst, is_orienting=True)
-            return
+            return is_found
 
         # Else block of the if statement above
         return
