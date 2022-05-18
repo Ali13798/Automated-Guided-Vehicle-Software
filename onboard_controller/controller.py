@@ -118,6 +118,10 @@ class Controller:
             start_name = lst[1]
             end_names = lst[3:]
 
+            if not (self.start_station_name and self.end_station_name):
+                time.sleep(self.timer_interval)
+                continue
+
             if (
                 self.start_station_name != start_name
                 or self.end_station_name not in end_names
