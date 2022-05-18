@@ -103,8 +103,8 @@ class Controller:
 
     def qr_scanner(self):
         while self.server.connected:
-            # qr_text = self.get_string_from_qr_code()
-            self.qr_text = "START START END END"
+            self.qr_text = self.get_string_from_qr_code()
+            # self.qr_text = "START START END END"
             if not self.qr_text:
                 time.sleep(self.timer_interval)
                 continue
@@ -333,12 +333,16 @@ class Controller:
                     remaining_pulses = expected_pulse_count - cur_pulse_count
                     self.emergency_stop()
                     is_found = self.simple_search()
-                    print(is_found)
+                    if is_found:
+                        self.is_userful_qr_code_scanned = False
+                    print("FOUND THE MARKERS. Resuming now...")
                     inst = Instruction(command=command, value=0)
-                    self.execute_instruction(inst, remaining_pulses)
+                    self.execute_instruction(
+                        inst, remaining_pulses, is_orienting=True
+                    )
                     break
 
-                elif self.is_obstructed:
+                elif self.is_obstructed and not is_orienting:
                     self.emergency_stop()
                     remaining_pulses = expected_pulse_count - cur_pulse_count
 
