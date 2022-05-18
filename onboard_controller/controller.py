@@ -100,6 +100,7 @@ class Controller:
         flag_handler.start()
 
     def flag_handler(self):
+        c = 0
         while self.server.connected:
             self.is_obstructed = (
                 self.horizontal_os.value == 1 or self.is_halted
@@ -112,7 +113,8 @@ class Controller:
                 time.sleep(self.timer_interval)
                 continue
 
-            print(qr_text)
+            print(c, "\n", qr_text)
+            c += 1
 
             lst = qr_text.split()
             start_name = lst[1]
@@ -123,13 +125,20 @@ class Controller:
                     self.start_station_name != start_name
                     or self.end_station_name not in end_names
                 ):
+                    # print(self.start_station_name, self.end_station_name)
+                    # print(start_name, end_names)
+                    # print(self.end_station_name not in end_names)
+                    self.is_userful_qr_code_scanned = False
                     time.sleep(self.timer_interval)
                     continue
+
             except AttributeError:
+                self.is_userful_qr_code_scanned = False
                 time.sleep(self.timer_interval)
                 continue
 
             self.is_userful_qr_code_scanned = True
+            # print("FOUND IT!")
             time.sleep(self.timer_interval)
 
     def shared_list_handler(self):
@@ -256,7 +265,7 @@ class Controller:
                 time.sleep(self.timer_interval)
                 continue
 
-            while self.is_e_stopped:
+            while self.is_e_stopped and self.server.connected:
                 time.sleep(self.timer_interval)
                 continue
 
@@ -428,7 +437,7 @@ class Controller:
         cap.set(4, 640)  # Set vertical resolution
         # initialize the cv2 QRCode detector
         detector = cv2.QRCodeDetector()
-        while True:
+        while self.server.connected:
             _, img = cap.read()
             data, bbox, _ = detector.detectAndDecode(img)
             if data:
@@ -439,7 +448,7 @@ class Controller:
         text = str(a)
         cap.release()
         cv2.destroyAllWindows()
-        return text
+        return text.upper()
 
     def simple_search(self):
         if (
@@ -451,7 +460,7 @@ class Controller:
             # half an inch at a time and search bands.
             is_found = False
             search_band_total = 4
-            for i in range(0, search_band_total, 0.5):
+            for i in range(0, search_band_total * 2):
                 temp_inst = Instruction(
                     command=AgvCommand.forward.value, value=0.5
                 )
