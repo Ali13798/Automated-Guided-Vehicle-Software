@@ -354,16 +354,27 @@ class Controller:
             AgvCommand.rotate_cw.value,
             AgvCommand.rotate_ccw.value,
         ]:
-            if command == AgvCommand.rotate_cw.value:
-                self.right_motor_kill_switch.on()
-                self.left_motor_kill_switch.off()
+            if not is_orienting:
+                if command == AgvCommand.rotate_cw.value:
+                    self.right_motor_kill_switch.on()
+                    self.left_motor_kill_switch.off()
+                else:
+                    self.right_motor_kill_switch.off()
+                    self.left_motor_kill_switch.on()
+
+                for dir in self.backward_directions:
+                    dir.off()
+                    time.sleep(0.050)
             else:
                 self.right_motor_kill_switch.off()
-                self.left_motor_kill_switch.on()
+                self.left_motor_kill_switch.off()
 
-            for dir in self.backward_directions:
-                dir.off()
-                time.sleep(0.050)
+                if command == AgvCommand.rotate_cw.value:
+                    self.backward_directions[0].off()
+                    self.backward_directions[1].on()
+                else:
+                    self.backward_directions[0].on()
+                    self.backward_directions[1].off()
 
             dist = AgvTools.calc_arc_length(angle=value)
             ramp_inputs = AgvTools.create_ramp_inputs(inches=dist)
