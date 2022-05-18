@@ -309,7 +309,7 @@ class GUI(ttk.Frame):
         self.dd_destination_station = ttk.OptionMenu(
             self.prod_pane,
             self.dd_var_destination_station,
-            self.dd_destinations_options[0],
+            self.dd_destinations_options[1],
             *self.dd_destinations_options,
         )
 
@@ -349,15 +349,20 @@ class GUI(ttk.Frame):
 
         files = self.get_route_files()
 
+        # Ignore files with "coord" in name
+        files = [f for f in files if "coord" not in f]
+
         # Remove the .txt file extension for each list item
         stations = [f[:-4].split("_to_") for f in files]
 
         # Remove duplicate station values
-        stations = np.unique(stations)
+        stations: np.array = np.unique(stations)
 
         # Sort the station values alphabetically
         stations.sort()
-        return list(stations)
+
+        # Reverse the order
+        return list(stations[::-1])
 
     def load_route(self) -> None:
         """Loads the selected route from the routes directory."""
