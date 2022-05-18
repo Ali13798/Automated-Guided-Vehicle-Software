@@ -443,23 +443,76 @@ class Controller:
             and not self.is_left_vos_actuated
             and not self.is_right_vos_actuated
         ):
-            while True:
-                special_angle = 52
-                inc = 4
-                inst = Instruction(
-                    command=AgvCommand.backward.value,
-                    value=1,
+            # Starting from current position traverse forward
+            # half an inch at a time and search bands.
+            is_found = False
+            search_band_total = 4
+            for i in range(0, search_band_total, 0.5):
+                temp_inst = Instruction(
+                    command=AgvCommand.forward.value, value=0.5
                 )
-                self.execute_instruction(instruction=inst, is_orienting=True)
-                inst = Instruction(
-                    command=AgvCommand.rotate_ccw.value, value=special_angle
+                self.execute_instruction(
+                    instruction=temp_inst, is_orienting=True
                 )
 
-                if self.is_left_vos_actuated:
-                    pass
-        else:
-            # complicated method
-            pass
+                is_found = self.pivot_helper()
+                if is_found:
+                    return
+
+            # never found targets.
+            temp_inst = Instruction(
+                command=AgvCommand.backward.value, value=search_band_total
+            )
+            self.execute_instruction(instruction=temp_inst, is_orienting=True)
+            return
+
+        # Else block of the if statement above
+        return
+
+    def pivot_helper(self):
+        inc = 4
+        total_one_way = 28
+        is_found = self.incremental_turns(
+            is_cw=True, increment=inc, sweep_angle=total_one_way
+        )
+        if is_found:
+            return is_found
+
+        temp_inst = Instruction(
+            command=AgvCommand.rotate_ccw.value, value=total_one_way
+        )
+        self.execute_instruction(instruction=temp_inst, is_orienting=True)
+        is_found = self.incremental_turns(
+            is_cw=False, increment=inc, sweep_angle=total_one_way
+        )
+        if is_found:
+            return is_found
+
+        temp_inst = Instruction(
+            command=AgvCommand.rotate_cw.value, value=total_one_way
+        )
+        self.execute_instruction(instruction=temp_inst, is_orienting=True)
+        return is_found
+
+    def incremental_turns(
+        self, is_cw: bool, increment: int = 4, sweep_angle: int = 52
+    ):
+        cmd = (
+            AgvCommand.rotate_cw.value
+            if is_cw
+            else AgvCommand.rotate_ccw.value
+        )
+        is_found = False
+        for i in range(sweep_angle // increment):
+            inst = Instruction(command=cmd, value=increment)
+            self.execute_instruction(instruction=inst, is_orienting=True)
+            is_found = (
+                self.is_left_vos_actuated and self.is_right_vos_actuated
+            )
+            if is_found:
+                return is_found
+
+        return is_found
 
 
 def main():
