@@ -99,7 +99,7 @@ class Controller:
         message_handler.start()
         inst_handler.start()
         flag_handler.start()
-        qr_code.start()
+        # qr_code.start()
 
     def qr_scanner(self):
         while self.server.connected:
