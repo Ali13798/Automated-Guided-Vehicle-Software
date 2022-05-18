@@ -7,7 +7,6 @@ import math
 import socket
 import threading
 import time
-import webbrowser
 
 import cv2
 import gpiozero
@@ -37,6 +36,7 @@ class Controller:
 
         self.timer_interval = 0.050
         self.destinations_list: list[str] = []
+        self.qr_text = ""
 
         # Flags
         self.is_e_stopped = False
@@ -95,28 +95,21 @@ class Controller:
         message_handler = threading.Thread(target=self.shared_list_handler)
         inst_handler = threading.Thread(target=self.instruction_handler)
         flag_handler = threading.Thread(target=self.flag_handler)
+        qr_code = threading.Thread(target=self.qr_scanner)
         message_handler.start()
         inst_handler.start()
         flag_handler.start()
+        qr_code.start()
 
-    def flag_handler(self):
-        c = 0
+    def qr_scanner(self):
         while self.server.connected:
-            self.is_obstructed = (
-                self.horizontal_os.value == 1 or self.is_halted
-            )
-            self.is_left_vos_actuated = self.vertical_left_os.value == 1
-            self.is_right_vos_actuated = self.vertical_right_os.value == 1
-
-            qr_text = self.get_string_from_qr_code()
-            if not qr_text:
+            # qr_text = self.get_string_from_qr_code()
+            self.qr_text = "START START END END"
+            if not self.qr_text:
                 time.sleep(self.timer_interval)
                 continue
 
-            print(c, "\n", qr_text)
-            c += 1
-
-            lst = qr_text.split()
+            lst = self.qr_text.split()
             start_name = lst[1]
             end_names = lst[3:]
 
@@ -125,20 +118,27 @@ class Controller:
                     self.start_station_name != start_name
                     or self.end_station_name not in end_names
                 ):
-                    # print(self.start_station_name, self.end_station_name)
-                    # print(start_name, end_names)
-                    # print(self.end_station_name not in end_names)
+                    print(self.start_station_name, self.end_station_name)
+                    print(start_name, end_names)
+                    print(self.end_station_name not in end_names)
                     self.is_userful_qr_code_scanned = False
                     time.sleep(self.timer_interval)
                     continue
 
             except AttributeError:
-                self.is_userful_qr_code_scanned = False
                 time.sleep(self.timer_interval)
                 continue
 
             self.is_userful_qr_code_scanned = True
-            # print("FOUND IT!")
+            time.sleep(self.timer_interval)
+
+    def flag_handler(self):
+        while self.server.connected:
+            self.is_obstructed = (
+                self.horizontal_os.value == 1 or self.is_halted
+            )
+            self.is_left_vos_actuated = self.vertical_left_os.value == 1
+            self.is_right_vos_actuated = self.vertical_right_os.value == 1
             time.sleep(self.timer_interval)
 
     def shared_list_handler(self):
@@ -522,6 +522,11 @@ class Controller:
             is_found = (
                 self.is_left_vos_actuated and self.is_right_vos_actuated
             )
+            # print(
+            #     self.is_left_vos_actuated,
+            #     self.is_right_vos_actuated,
+            #     is_found,
+            # )
             if is_found:
                 return is_found
 
