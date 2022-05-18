@@ -427,11 +427,11 @@ class GUI(ttk.Frame):
             inst_list = [inst.strip().split() for inst in inst_list]
             self.inst_list = []
             for inst in inst_list:
-                cmd = AgvCommand(inst[0].value)
+                cmd = AgvCommand(inst[0]).value
                 value = float(inst[1])
 
                 self.inst_list.append(Instruction(cmd, value))
-                msg = f"{cmd.value} {value}"
+                msg = f"{cmd} {value}"
                 self.client.send_message(msg)
 
         self.traverse_waypoints(waypoints=waypoints, set_waypoints=True)
